@@ -1,0 +1,10 @@
+﻿{
+    "profiles": {
+        "Dev.Gaspra.MergeSprocs": {
+            "commandName": "Project",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "dev"
+            }
+        }
+    }
+}

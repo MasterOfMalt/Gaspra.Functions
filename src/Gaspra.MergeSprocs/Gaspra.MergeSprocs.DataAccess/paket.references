@@ -1,0 +1,5 @@
+Gaspra.Connection
+Gaspra.Logging.Builder
+Gaspra.Signing
+Microsoft.Extensions.Hosting
+System.Data.Sqlclient
