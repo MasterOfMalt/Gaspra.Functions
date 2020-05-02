@@ -28,11 +28,14 @@ namespace Gaspra.MergeSprocs
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Run(() =>
-                {
-                    logger.LogDebug("Hi there!");
-                });
+                var tableInfo = await dataAccess.GetTableInformation();
+
+                logger.LogInformation("{tableinfo}", tableInfo);
+
+                return;
             }
+
+
         }
     }
 }
