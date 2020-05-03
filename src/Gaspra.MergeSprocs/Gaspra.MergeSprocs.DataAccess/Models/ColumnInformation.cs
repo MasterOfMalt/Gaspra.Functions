@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gaspra.MergeSprocs.DataAccess.Models
 {
-    public class SqlTableModel
+    public class ColumnInformation
     {
         public string TableSchema { get; set; }
         public string TableName { get; set; }
@@ -23,7 +23,7 @@ namespace Gaspra.MergeSprocs.DataAccess.Models
         public int? IncrementValue { get; set; }
         public string DefaultValue { get; set; }
 
-        public SqlTableModel(
+        public ColumnInformation(
             string tableSchema,
             string tableName,
             string columnName,
@@ -53,9 +53,9 @@ namespace Gaspra.MergeSprocs.DataAccess.Models
             DefaultValue = defaultValue;
         }
 
-        public static async Task<IEnumerable<SqlTableModel>> FromDataReader(SqlDataReader dataReader)
+        public static async Task<IEnumerable<ColumnInformation>> FromDataReader(SqlDataReader dataReader)
         {
-            var sqlTableModels = new List<SqlTableModel>();
+            var columns = new List<ColumnInformation>();
 
             while (await dataReader.ReadAsync())
             {
@@ -73,7 +73,7 @@ namespace Gaspra.MergeSprocs.DataAccess.Models
                 var incrementValue = dataReader[nameof(IncrementValue)].GetValue<int?>();
                 var defaultValue = dataReader[nameof(DefaultValue)].GetValue<string>();
 
-                sqlTableModels.Add(new SqlTableModel(
+                columns.Add(new ColumnInformation(
                     tableSchema,
                     tableName,
                     columnName,
@@ -89,7 +89,7 @@ namespace Gaspra.MergeSprocs.DataAccess.Models
                     defaultValue));
             }
 
-            return sqlTableModels;
+            return columns;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Gaspra.MergeSprocs
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                var tableInfo = await dataAccess.GetTableInformation();
+                var tableInfo = await dataAccess.GetColumnInformation();
 
                 logger.LogInformation("{tableinfo}", tableInfo);
 

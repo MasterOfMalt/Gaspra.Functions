@@ -8,6 +8,6 @@ namespace Gaspra.MergeSprocs.DataAccess.Interfaces
 {
     public interface IDataAccess
     {
-        public Task<IEnumerable<SqlTableModel>> GetTableInformation();
+        public Task<IEnumerable<ColumnInformation>> GetColumnInformation();
     }
 }

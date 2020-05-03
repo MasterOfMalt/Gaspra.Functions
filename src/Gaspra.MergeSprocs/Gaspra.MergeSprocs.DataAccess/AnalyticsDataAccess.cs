@@ -23,24 +23,22 @@ namespace Gaspra.MergeSprocs.DataAccess
                 .ToConnectionDetails(configuration.GetSection("ConnectionDetails"));
         }
 
-        public async Task<IEnumerable<SqlTableModel>> GetTableInformation()
+        public async Task<IEnumerable<ColumnInformation>> GetColumnInformation()
         {
-            using (var connection = new SqlConnection(connectionDetails.ToConnectionString()))
+            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+
+            var command = new SqlCommand(StoredProcedures.GetTableInformation(), connection)
             {
-                var command = new SqlCommand(StoredProcedures.GetTableInformation(), connection)
-                {
-                    CommandType = CommandType.Text
-                };
+                CommandType = CommandType.Text
+            };
 
-                connection.Open();
+            connection.Open();
 
-                using (var dataReader = await command.ExecuteReaderAsync())
-                {
-                    var sqlTableModels = await SqlTableModel.FromDataReader(dataReader);
+            using var dataReader = await command.ExecuteReaderAsync();
 
-                    return sqlTableModels;
-                }
-            }
+            var sqlTableModels = await ColumnInformation.FromDataReader(dataReader);
+
+            return sqlTableModels;
         }
     }
 }
