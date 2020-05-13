@@ -1,8 +1,6 @@
 ﻿using Gaspra.MergeSprocs.DataAccess.Extensions;
-using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Gaspra.MergeSprocs.DataAccess.Models
@@ -90,6 +88,32 @@ namespace Gaspra.MergeSprocs.DataAccess.Models
             }
 
             return columns;
+        }
+    }
+
+    public class ColumnComparerByTableName : IEqualityComparer<ColumnInformation>
+    {
+        public bool Equals(ColumnInformation x, ColumnInformation y)
+        {
+            return x.TableName.Equals(y.TableName);
+        }
+
+        public int GetHashCode(ColumnInformation obj)
+        {
+            return obj.TableName.GetHashCode();
+        }
+    }
+
+    public class ColumnComparerBySchemaName : IEqualityComparer<ColumnInformation>
+    {
+        public bool Equals(ColumnInformation x, ColumnInformation y)
+        {
+            return x.TableSchema.Equals(y.TableSchema);
+        }
+
+        public int GetHashCode(ColumnInformation obj)
+        {
+            return obj.TableSchema.GetHashCode();
         }
     }
 }

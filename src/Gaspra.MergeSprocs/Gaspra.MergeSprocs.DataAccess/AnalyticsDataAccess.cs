@@ -27,7 +27,7 @@ namespace Gaspra.MergeSprocs.DataAccess
         {
             using var connection = new SqlConnection(connectionDetails.ToConnectionString());
 
-            var command = new SqlCommand(StoredProcedures.GetTableInformation(), connection)
+            var command = new SqlCommand(StoredProcedures.GetColumnInformation(), connection)
             {
                 CommandType = CommandType.Text
             };
@@ -36,9 +36,45 @@ namespace Gaspra.MergeSprocs.DataAccess
 
             using var dataReader = await command.ExecuteReaderAsync();
 
-            var sqlTableModels = await ColumnInformation.FromDataReader(dataReader);
+            var columnInformationModels = await ColumnInformation.FromDataReader(dataReader);
 
-            return sqlTableModels;
+            return columnInformationModels;
+        }
+
+        public async Task<IEnumerable<FKConstraintInformation>> GetFKConstraintInformation()
+        {
+            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+
+            var command = new SqlCommand(StoredProcedures.GetFKConstraintInformation(), connection)
+            {
+                CommandType = CommandType.Text
+            };
+
+            connection.Open();
+
+            using var dataReader = await command.ExecuteReaderAsync();
+
+            var fkConstraintModels = await FKConstraintInformation.FromDataReader(dataReader);
+
+            return fkConstraintModels;
+        }
+
+        public async Task<IEnumerable<ExtendedPropertyInformation>> GetExtendedProperties()
+        {
+            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+
+            var command = new SqlCommand(StoredProcedures.GetExtendedProperties(), connection)
+            {
+                CommandType = CommandType.Text
+            };
+
+            connection.Open();
+
+            using var dataReader = await command.ExecuteReaderAsync();
+
+            var extendedProperties = await ExtendedPropertyInformation.FromDataReader(dataReader);
+
+            return extendedProperties;
         }
     }
 }
