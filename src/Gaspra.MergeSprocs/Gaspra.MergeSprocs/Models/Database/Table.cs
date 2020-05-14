@@ -45,7 +45,6 @@ namespace Gaspra.MergeSprocs.Models.Database
                             Column.From(c.TableName, columnInformation, foreignKeyConstraintInformation),
                             extendedProperties
                         );
-
                 });
 
             return tables;

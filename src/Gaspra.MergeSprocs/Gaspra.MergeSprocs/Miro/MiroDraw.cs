@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Gaspra.MergeSprocs
+namespace Gaspra.MergeSprocs.Miro
 {
     public class MiroDraw
     {

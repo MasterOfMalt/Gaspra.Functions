@@ -47,7 +47,10 @@ namespace Gaspra.MergeSprocs.Models.Database
             ForeignKey = foreignKey;
         }
 
-        public static IEnumerable<Column> From(string tableName, IEnumerable<ColumnInformation> columnInformation, IEnumerable<FKConstraintInformation> foreignKeyInformation)
+        public static IEnumerable<Column> From(
+            string tableName,
+            IEnumerable<ColumnInformation> columnInformation,
+            IEnumerable<FKConstraintInformation> foreignKeyInformation)
         {
             var columns = columnInformation
                 .Where(c => c.TableName.Equals(tableName))
@@ -67,10 +70,12 @@ namespace Gaspra.MergeSprocs.Models.Database
                         var constrainedTo =
                             isParent ?
                                 foreignKeyInformation
-                                    .Where(f => f.ConstraintTableName.Equals(tableName))
+                                    .Where(f => f.ConstraintTableName.Equals(tableName) &&
+                                                f.ConstraintTableColumn.Equals(c.ColumnName))
                                     .Select(f => f.ReferencedTableName) :
                                 foreignKeyInformation
-                                    .Where(f => f.ReferencedTableName.Equals(tableName))
+                                    .Where(f => f.ReferencedTableName.Equals(tableName) &&
+                                                f.ReferencedTableColumn.Equals(c.ColumnName))
                                     .Select(f => f.ConstraintTableName);
 
                         foreignKey = new ForeignKeyConstraint(isParent, constrainedTo);

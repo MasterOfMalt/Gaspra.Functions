@@ -1,11 +1,15 @@
 ﻿using Gaspra.MergeSprocs.DataAccess.Interfaces;
 using Gaspra.MergeSprocs.Interfaces;
+using Gaspra.MergeSprocs.Miro;
 using Gaspra.MergeSprocs.Models;
 using Gaspra.MergeSprocs.Models.Database;
+using Gaspra.MergeSprocs.Models.Merge;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,14 +22,17 @@ namespace Gaspra.MergeSprocs
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
         private readonly IMergeProcedureGenerator mergeProcedureGenerator;
+        private readonly IConfiguration configuration;
 
         public MergeSprocsService(
             IDataAccess dataAccess,
             IMergeProcedureGenerator mergeProcedureGenerator,
+            IConfiguration configuration,
             ILogger<MergeSprocsService> logger)
         {
             this.dataAccess = dataAccess;
             this.mergeProcedureGenerator = mergeProcedureGenerator;
+            this.configuration = configuration;
             this.logger = logger;
         }
 
@@ -38,6 +45,9 @@ namespace Gaspra.MergeSprocs
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                /*
+                 * build up database objects
+                 */
                 var columnInfo = await dataAccess.GetColumnInformation();
 
                 var fkInfo = await dataAccess.GetFKConstraintInformation();
@@ -46,9 +56,9 @@ namespace Gaspra.MergeSprocs
 
                 var database = Schema.From(columnInfo, extendedProps, fkInfo);
 
-                //var miroDraw = new MiroDraw();
-                //await miroDraw.Draw(database.First());
-
+                /*
+                 * save them out to json/ miro
+                 */
                 WriteFile(
                     "analytics.database.json",
                     JsonConvert.SerializeObject(
@@ -59,37 +69,28 @@ namespace Gaspra.MergeSprocs
                             NullValueHandling = NullValueHandling.Ignore
                         }));
 
+                if (bool.Parse(configuration.GetSection("miro")["draw"]))
+                {
+                    var miroDraw = new MiroDraw();
+                    await miroDraw.Draw(database.First());
+                }
 
+                /*
+                 * build up merge variables
+                 */
+                var mergeVariables = MergeVariables.From(database.First());
 
+                WriteFile(
+                    "analytics.database.mergevariables.json",
+                    JsonConvert.SerializeObject(
+                        mergeVariables,
+                        Formatting.Indented,
+                        new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        }));
 
-
-
-
-                //var tables = DatabaseTable.From(
-                //    columnInfo,
-                //    fkInfo,
-                //    extendedProps);
-                //
-                //var mergeProcedures = mergeProcedureGenerator.Generate(tables);
-                //
-                //WriteFile(
-                //    "merge.json",
-                //    JsonConvert.SerializeObject(
-                //        mergeProcedures,
-                //        Formatting.Indented,
-                //        new JsonSerializerSettings
-                //        {
-                //            NullValueHandling = NullValueHandling.Ignore
-                //        }));
-                //
-                //foreach(var mergeProcedure in mergeProcedures)
-                //{
-                //    WriteFile(
-                //        $"Analytics.{mergeProcedure.ProcedureName}.sql",
-                //        mergeProcedureGenerator.GenerateMergeProcedure(mergeProcedure));
-                //}
-
-                return;
+                break;
             }
         }
 
