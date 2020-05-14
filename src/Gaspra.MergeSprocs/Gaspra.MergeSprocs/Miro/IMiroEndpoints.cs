@@ -13,7 +13,6 @@ namespace Gaspra.MergeSprocs.Miro
         Task<string> GetWidgets();
 
         [Post("/widgets")]
-        Task DrawWidget([Body]Dictionary<string, string> data);
-
+        Task DrawWidget([Body]Dictionary<string, object> data);
     }
 }

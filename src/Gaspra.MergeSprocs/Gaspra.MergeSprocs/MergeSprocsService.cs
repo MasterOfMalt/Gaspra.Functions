@@ -73,6 +73,8 @@ namespace Gaspra.MergeSprocs
                 {
                     var miroDraw = new MiroDraw();
                     await miroDraw.Draw(database.First());
+
+                    logger.LogInformation("drawn miro objects");
                 }
 
                 /*
