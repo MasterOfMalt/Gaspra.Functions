@@ -33,14 +33,16 @@ namespace Gaspra.MergeSprocs.Models.Merge
         {
             var mergeVariables = new List<MergeVariables>();
 
+            var dependencyTree = TableTree.Build(schema);
+
             foreach(var table in schema.Tables)
             {
                 mergeVariables.Add(new MergeVariables(
                     schema.Name,
                     table,
-                    table.TableTypeColumns(schema),
-                    table.MergeIdentifierColumns(schema),
-                    table.TablesToJoin(schema)));
+                    table.TableTypeColumns(schema, dependencyTree),
+                    table.MergeIdentifierColumns(schema, dependencyTree),
+                    table.TablesToJoin(schema, dependencyTree)));
             }
 
             return mergeVariables;
@@ -64,10 +66,8 @@ namespace Gaspra.MergeSprocs.Models.Merge
             return $"TT_{variables.Table.Name}";
         }
 
-        public static IEnumerable<Column> TableTypeColumns(this Table table, Schema schema)
+        public static IEnumerable<Column> TableTypeColumns(this Table table, Schema schema, TableTree dependencyTree)
         {
-            var requiredColumns = table.Columns.Where(c => !c.IdentityColumn).Count();
-
             var tableTypeColumns = table.Columns
                 /*
                  * get all columns which aren't identity columns
@@ -76,40 +76,43 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 /*
                  * get all columns which aren't foreign key columns
                  */
-                .Where(c => c.ForeignKey == null)
+                .Where(c => !c.ForeignKey.ConstrainedTo.Any())
                 .ToList();
 
-            var dependencies = TableDependencies.From(table, schema);
+            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
 
             /*
-             * using the dependencies calculate the columns required to fill the identifier columns
+             * take the value from the table below it
              */
-            foreach (var foreignKeyColumn in table.Columns.Where(c => c.ForeignKey != null && c.ForeignKey.IsParent))
+            if (table.Columns.Any(c => c.ForeignKey != null))
             {
-                var parentTable = dependencies.ParentTables.Where(t => t.Columns.Any(c => c.Name.Equals(foreignKeyColumn.Name))).FirstOrDefault();
+                var lowerBranches = dependencyTree.Branches
+                    .Where(b => b.depth > depth);
 
-                if(parentTable != null)
-                {
-                    tableTypeColumns.AddRange(parentTable.MergeIdentifierColumns(schema));
-                }
+                var lowerRelevantBranches = lowerBranches
+                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
+
+                tableTypeColumns.AddRange(lowerRelevantBranches.SelectMany(t => t.dependencies.CurrentTable.Columns.Where(c => !c.IdentityColumn)));
             }
 
             /*
-            foreach (var foreignKeyColumn in table.Columns.Where(c => c.ForeignKey != null && !c.ForeignKey.IsParent))
+             * take the id from the table above it
+             */
+            if (table.Columns.Any(c => c.ForeignKey != null))
             {
-                var childTable = dependencies.ChildrenTables.Where(t => t.Columns.Any(c => c.Name.Equals(foreignKeyColumn.Name))).FirstOrDefault();
+                var higherBranches = dependencyTree.Branches
+                    .Where(b => b.depth < depth);
 
-                if(childTable != null)
-                {
-                    tableTypeColumns.AddRange(childTable.MergeIdentifierColumns(schema));
-                }
+                var higherRelevantBranches = higherBranches
+                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
+
+                tableTypeColumns.AddRange(higherRelevantBranches.SelectMany(t => t.dependencies.CurrentTable.Columns.Where(c => c.IdentityColumn)));
             }
-            */
 
             return tableTypeColumns;
         }
 
-        public static IEnumerable<Column> MergeIdentifierColumns(this Table table, Schema schema)
+        public static IEnumerable<Column> MergeIdentifierColumns(this Table table, Schema schema, TableTree dependencyTree)
         {
             var identifyingColumns = new List<Column>();
 
@@ -142,31 +145,49 @@ namespace Gaspra.MergeSprocs.Models.Merge
              *
              * todo: this could be incorrect
              */
-            if(table.Columns.Any(c => c.ForeignKey != null && c.ForeignKey.IsParent))
+            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
+
+            if(table.Columns.Any(c => c.ForeignKey != null))
             {
-                identifyingColumns.AddRange(table.Columns.Where(c => c.ForeignKey != null && c.ForeignKey.IsParent));
+                var higherBranches = dependencyTree.Branches
+                    .Where(b => b.depth < depth);
+
+                var higherRelevantBranches = higherBranches
+                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
+
+                var includeContraints = table.Columns.Where(c => c.ForeignKey != null && higherRelevantBranches.Any(b => c.ForeignKey.ConstrainedTo.Contains(b.dependencies.CurrentTable.Name)));
+
+                identifyingColumns.AddRange(includeContraints);
             }
 
             return identifyingColumns;
         }
 
-        public static IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin(this Table table, Schema schema)
+        public static IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin(this Table table, Schema schema, TableTree dependencyTree)
         {
             var tablesToJoin = new List<(Table, IEnumerable<Column>, IEnumerable<Column>)>();
 
-            var dependencies = TableDependencies.From(table, schema);
+            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
 
-            foreach(var dependency in dependencies.ParentTables)
+            if (table.Columns.Any(c => c.ForeignKey != null))
             {
-                var mergeIdentifierColumns = dependency.MergeIdentifierColumns(schema);
+                var lowerBranches = dependencyTree.Branches
+                    .Where(b => b.depth > depth);
 
-                var columnsToJoinOn = dependency.Columns.Where(c => mergeIdentifierColumns.Any(m => m.Name.Equals(c.Name)));
+                var lowerRelevantBranches = lowerBranches
+                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
 
-                var tableTypeColumns = table.TableTypeColumns(schema);
 
-                var columnsToSelect = dependency.Columns.Where(c => c.IdentityColumn);
+                var tablesNeededInJoin = lowerRelevantBranches.Select(b => b.dependencies.CurrentTable);
 
-                tablesToJoin.Add((dependency, columnsToJoinOn, columnsToSelect));
+                foreach(var tableForJoin in tablesNeededInJoin)
+                {
+                    /*
+                     * todo:
+                     * need to get teh specific columns required for the data and not every column that isn't an identity column
+                     */
+                    tablesToJoin.Add((tableForJoin, tableForJoin.Columns.Where(c => c.IdentityColumn), tableForJoin.Columns.Where(c => !c.IdentityColumn)));
+                }
             }
 
             return tablesToJoin;

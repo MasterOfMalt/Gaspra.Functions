@@ -63,22 +63,39 @@ namespace Gaspra.MergeSprocs.Models.Database
 
                     ForeignKeyConstraint foreignKey = null;
 
-                    if(columnsForeignKey != null)
+                    //if(columnsForeignKey != null)
+                    //{
+                    //    var isParent = columnsForeignKey.ConstraintTableName.Equals(tableName);
+
+                    //    var constrainedTo =
+                    //        isParent ?
+                    //            foreignKeyInformation
+                    //                .Where(f => f.ConstraintTableName.Equals(tableName) &&
+                    //                            f.ConstraintTableColumn.Equals(c.ColumnName))
+                    //                .Select(f => f.ReferencedTableName) :
+                    //            foreignKeyInformation
+                    //                .Where(f => f.ReferencedTableName.Equals(tableName) &&
+                    //                            f.ReferencedTableColumn.Equals(c.ColumnName))
+                    //                .Select(f => f.ConstraintTableName);
+
+                    //    foreignKey = new ForeignKeyConstraint(isParent, constrainedTo);
+                    //}
+
+                    if(foreignKeyInformation.Any(f => f.ConstraintTableName.Equals(tableName) || f.ReferencedTableName.Equals(tableName)))
                     {
-                        var isParent = columnsForeignKey.ConstraintTableName.Equals(tableName);
+                        var parentOf = foreignKeyInformation
+                            .Where(f => f.ConstraintTableName.Equals(tableName) && f.ConstraintTableColumn.Equals(c.ColumnName))
+                            .Select(f => f.ReferencedTableName);
 
-                        var constrainedTo =
-                            isParent ?
-                                foreignKeyInformation
-                                    .Where(f => f.ConstraintTableName.Equals(tableName) &&
-                                                f.ConstraintTableColumn.Equals(c.ColumnName))
-                                    .Select(f => f.ReferencedTableName) :
-                                foreignKeyInformation
-                                    .Where(f => f.ReferencedTableName.Equals(tableName) &&
-                                                f.ReferencedTableColumn.Equals(c.ColumnName))
-                                    .Select(f => f.ConstraintTableName);
+                        var childOf = foreignKeyInformation
+                            .Where(f => f.ReferencedTableName.Equals(tableName) && f.ReferencedTableColumn.Equals(c.ColumnName))
+                            .Select(f => f.ConstraintTableName);
 
-                        foreignKey = new ForeignKeyConstraint(isParent, constrainedTo);
+                        var constrainedTo = new List<string>();
+                        constrainedTo.AddRange(parentOf);
+                        constrainedTo.AddRange(childOf);
+
+                        foreignKey = new ForeignKeyConstraint(constrainedTo);
                     }
 
                     return new Column(

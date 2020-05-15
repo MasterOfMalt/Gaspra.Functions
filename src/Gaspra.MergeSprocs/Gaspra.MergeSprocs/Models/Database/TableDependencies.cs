@@ -7,43 +7,30 @@ namespace Gaspra.MergeSprocs.Models.Database
 {
     public class TableDependencies
     {
-        public IEnumerable<Table> ParentTables { get; set; }
-        public IEnumerable<Table> ChildrenTables { get; set; }
+        public Table CurrentTable { get; set; }
+        public IEnumerable<Table> ConstrainedToTables { get; set; }
 
         public TableDependencies(
-            IEnumerable<Table> parentTables,
-            IEnumerable<Table> childrenTables)
+            Table currentTable,
+            IEnumerable<Table> constrainedToTables)
         {
-            ParentTables = parentTables;
-            ChildrenTables = childrenTables;
+            CurrentTable = currentTable;
+            ConstrainedToTables = constrainedToTables;
         }
 
         public static TableDependencies From(Table table, Schema schema)
         {
-            var childForeignKeys = table.Columns.Select(c => c.ForeignKey).Where(f => f != null && !f.IsParent);
+            var foreignKeys = table.Columns.Select(c => c.ForeignKey).Where(f => f != null);
 
-            var childTables = schema
+            var constrainedToTables = schema
                 .Tables
-                .Where(t => childForeignKeys
+                .Where(t => foreignKeys
                     .SelectMany(f => f.ConstrainedTo)
-                    .Contains(t.Name))
-                //todo
-                .Where(t => !t.Name.EndsWith("Link"));
-
-
-            var parentForeignKeys = table.Columns.Select(c => c.ForeignKey).Where(f => f != null && f.IsParent);
-
-            var parentTables = schema
-                .Tables
-                .Where(t => parentForeignKeys
-                    .SelectMany(f => f.ConstrainedTo)
-                    .Contains(t.Name))
-                //todo
-                .Where(t => !t.Name.EndsWith("Link"));
+                    .Contains(t.Name));
 
             return new TableDependencies(
-                parentTables,
-                childTables);
+                table,
+                constrainedToTables);
         }
     }
 }

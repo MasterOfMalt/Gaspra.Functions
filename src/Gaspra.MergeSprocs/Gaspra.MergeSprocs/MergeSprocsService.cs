@@ -1,5 +1,5 @@
 ﻿using Gaspra.MergeSprocs.DataAccess.Interfaces;
-using Gaspra.MergeSprocs.Interfaces;
+using Gaspra.MergeSprocs.Extensions;
 using Gaspra.MergeSprocs.Miro;
 using Gaspra.MergeSprocs.Models;
 using Gaspra.MergeSprocs.Models.Database;
@@ -21,17 +21,14 @@ namespace Gaspra.MergeSprocs
     {
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
-        private readonly IMergeProcedureGenerator mergeProcedureGenerator;
         private readonly IConfiguration configuration;
 
         public MergeSprocsService(
             IDataAccess dataAccess,
-            IMergeProcedureGenerator mergeProcedureGenerator,
             IConfiguration configuration,
             ILogger<MergeSprocsService> logger)
         {
             this.dataAccess = dataAccess;
-            this.mergeProcedureGenerator = mergeProcedureGenerator;
             this.configuration = configuration;
             this.logger = logger;
         }
@@ -43,57 +40,101 @@ namespace Gaspra.MergeSprocs
                 logger.LogInformation($"{nameof(MergeSprocsService)} cancellation token called");
             });
 
-            while (!cancellationToken.IsCancellationRequested)
+            /*
+             * build up database objects
+             */
+            var columnInfo = await dataAccess.GetColumnInformation();
+
+            var fkInfo = await dataAccess.GetFKConstraintInformation();
+
+            var extendedProps = await dataAccess.GetExtendedProperties();
+
+            var database = Schema.From(columnInfo, extendedProps, fkInfo);
+
+            logger.LogInformation("calculated schema");
+
+            /*
+             * save them out to json
+             */
+            WriteFile(
+                "analytics.database.json",
+                JsonConvert.SerializeObject(
+                    database,
+                    Formatting.Indented,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }));
+
+            logger.LogInformation("output: analytics.database.json");
+
+            /*
+             * Calculate tree of tables
+             */
+            var tree = TableTree.Build(database.First());
+
+            logger.LogInformation("calculated table tree");
+
+            WriteFile(
+                "analytics.database.tabletree.json",
+                JsonConvert.SerializeObject(
+                    tree,
+                    Formatting.Indented,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }));
+
+            logger.LogInformation("output: analytics.database.tabletree.json");
+
+            /*
+             * build up merge variables
+             */
+            var mergeVariables = MergeVariables.From(database.First());
+
+            logger.LogInformation("calculated merge variables");
+
+            WriteFile(
+                "analytics.database.mergevariables.json",
+                JsonConvert.SerializeObject(
+                    mergeVariables,
+                    Formatting.Indented,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }));
+
+            logger.LogInformation("output: analytics.database.mergevariables.json");
+
+            /*
+             * Create merge statements
+             */
+
+            foreach(var mergeVariable in mergeVariables)
             {
-                /*
-                 * build up database objects
-                 */
-                var columnInfo = await dataAccess.GetColumnInformation();
+                var mergeStatement = mergeVariable.BuildMergeSproc();
 
-                var fkInfo = await dataAccess.GetFKConstraintInformation();
+                var fileName = $"{mergeVariable.SchemaName}.{mergeVariable.ProcedureName()}.sql";
 
-                var extendedProps = await dataAccess.GetExtendedProperties();
+                WriteFile(fileName, mergeStatement);
 
-                var database = Schema.From(columnInfo, extendedProps, fkInfo);
-
-                /*
-                 * save them out to json/ miro
-                 */
-                WriteFile(
-                    "analytics.database.json",
-                    JsonConvert.SerializeObject(
-                        database,
-                        Formatting.Indented,
-                        new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore
-                        }));
-
-                if (bool.Parse(configuration.GetSection("miro")["draw"]))
-                {
-                    var miroDraw = new MiroDraw();
-                    await miroDraw.Draw(database.First());
-
-                    logger.LogInformation("drawn miro objects");
-                }
-
-                /*
-                 * build up merge variables
-                 */
-                var mergeVariables = MergeVariables.From(database.First());
-
-                WriteFile(
-                    "analytics.database.mergevariables.json",
-                    JsonConvert.SerializeObject(
-                        mergeVariables,
-                        Formatting.Indented,
-                        new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore
-                        }));
-
-                break;
+                logger.LogInformation("output: {filename}", fileName);
             }
+
+            /*
+             * Draw to miro
+             */
+            if (bool.Parse(configuration.GetSection("miro")["draw"]))
+            {
+                var miroDraw = new MiroDraw();
+                await miroDraw.Draw(database.First(), tree);
+
+                logger.LogInformation("drawn miro objects");
+            }
+
+            logger.LogInformation("Done!");
+
+            return;
         }
 
         private void WriteFile(string fileName, string fileContents)

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Threading;
 
 namespace Gaspra.MergeSprocs.Miro
 {
@@ -25,66 +26,99 @@ namespace Gaspra.MergeSprocs.Miro
             miroEndpoints = RestService.For<IMiroEndpoints>(httpClient);
         }
 
-        public async Task Draw(Schema schema)
+        public async Task Draw(Schema schema, TableTree tree)
         {
-            var drawTasks = new List<Task>();
-
             int rowNum = 0;
 
             int colNum = 0;
 
-            foreach(var table in schema.Tables)
+            var maxDepth = tree.Branches.Select(b => b.depth).OrderByDescending(b => b).First();
+
+            for(var depth = 1; depth < maxDepth+1; depth++)
             {
-                var miroShape = new MiroShape
+                var tablesAtDepth = tree.Branches.Where(b => b.depth.Equals(depth)).Select(b => b.dependencies.CurrentTable);
+
+                foreach (var table in tablesAtDepth)
                 {
-                    PosX = colNum * 500,
-                    PosY = rowNum * 600,
-                    Text = $"{table.Name}",
-                    Style = new Dictionary<string, object>
+                    var miroShapeTableHeader = new MiroShape
                     {
-                        { "backgroundColor", "#ff7b00" },
-                        { "borderWidth", 4.0 },
-                        { "fontSize", 18 },
-                        { "textColor", "#242322" },
-                        { "borderColor", "#242322" },
-                        { "backgroundOpacity", 0.75 }
-                    }
-                };
+                        PosX = colNum * 500,
+                        PosY = depth * 600,
+                        Width = 300,
+                        Height = 40,
+                        Text = $"<b>{table.Name}</b>",
+                        Style = new Dictionary<string, object>
+                        {
+                            { "backgroundColor", "#f09800" },
+                            { "borderOpacity", 0.0 },
+                            { "fontSize", 16 },
+                            { "textColor", "#ebebeb" },
+                            { "textAlign", "left" }
+                        }
+                    };
 
-                drawTasks.Add(miroEndpoints.DrawWidget(miroShape.ToDictionary()));
+                    await DrawWidget(miroShapeTableHeader.ToDictionary(), table.Name);
 
-                ++colNum;
+                    /*
+                        font size 16 can draw 16 rows per 400 height. About 25px line height
 
-                if(colNum >= 5)
-                {
-                    colNum = 0;
-                    ++rowNum;
+                        posy offset is (header+body / 2)
+                     */
+
+                    var miroShapeTableColumns = new MiroShape
+                    {
+                        PosX = colNum * 500,
+                        PosY = (depth * 600) + 220,
+                        Width = 300,
+                        Height = 400,
+                        Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
+                        Style = new Dictionary<string, object>
+                        {
+                            { "backgroundColor", "#00246b" },
+                            { "borderOpacity", 0.0 },
+                            { "fontSize", 16 },
+                            { "textColor", "#ebebeb" },
+                            { "textAlign", "left" },
+                            { "textAlignVertical", "top" }
+                        }
+                    };
+
+                    await DrawWidget(miroShapeTableColumns.ToDictionary(), $"{table.Name} columns");
+
+                    ++colNum;
                 }
-            }
 
-            await Task.WhenAll(drawTasks);
+                colNum = 0;
+            }
 
             var widgetsJson = await miroEndpoints.GetWidgets();
 
             var widgets = JsonConvert.DeserializeObject<Widgets>(widgetsJson);
+
+            var linksDrawn = new List<(string, string)>();
 
             foreach(var table in schema.Tables)
             {
                 var dependencies = TableDependencies.From(table, schema);
 
                 var links = dependencies
-                    .ChildrenTables
+                    .ConstrainedToTables
                     .ToList();
 
-                var tableId = widgets.Data.Where(w => w.Text.Equals(table.Name)).FirstOrDefault();
+                var tableId = widgets.Data.Where(w => w.Text.Equals($"<b>{table.Name}</b>")).FirstOrDefault();
 
                 if (tableId != null)
                 {
                     foreach (var link in links)
                     {
-                        var linkId = widgets.Data.Where(w => w.Text.Equals(link.Name)).FirstOrDefault();
+                        var linkId = widgets.Data.Where(w => w.Text.Equals($"<b>{link.Name}</b>")).FirstOrDefault();
 
-                        if (linkId != null)
+                        linksDrawn
+                            .Where(l =>
+                                (l.Item1.Equals(tableId) && l.Item2.Equals(linkId) ||
+                                (l.Item1.Equals(linkId) && l.Item2.Equals(tableId))));
+
+                        if (linkId != null && !linksDrawn.Any())
                         {
                             var miroLine = new MiroLine
                             {
@@ -96,21 +130,43 @@ namespace Gaspra.MergeSprocs.Miro
                                     { "borderStyle", "normal" },
                                     { "borderWidth", 4.0 },
                                     { "lineEndType", "none" },
-                                    { "lineStartType", "none" },
+                                    { "lineStartType", "opaque_rhombus" },
                                     { "lineType", "bezier" }
                                 }
                             };
 
-                            drawTasks.Add(miroEndpoints.DrawWidget(miroLine.ToDictionary()));
+                            await DrawWidget(miroLine.ToDictionary(), $"line: {tableId.Text} -> {linkId.Text}");
+
+                            linksDrawn.Add((tableId.Text, linkId.Text));
                         }
                     }
                 }
             }
+        }
 
 
-            await Task.WhenAll(drawTasks);
+        public async Task DrawWidget(Dictionary<string, object> widget, string name)
+        {
+            try
+            {
+                await miroEndpoints.DrawWidget(widget);
+
+                Console.WriteLine($"drawn widget: {name}");
+            }
+            catch (Exception ex)
+            {
+                var exception = ex;
+
+                Console.WriteLine($"waiting due to: {ex.Message}");
+
+                Thread.Sleep(5000);
+
+                await DrawWidget(widget, name);
+            }
         }
     }
+
+
 
     public class MiroShape
     {
@@ -126,7 +182,6 @@ namespace Gaspra.MergeSprocs.Miro
         {
             var shapeAsDict = new Dictionary<string, object>
             {
-                {"thisparameter", "willfuckthecall" },
                 { "type", Type },
                 { "x", PosX },
                 { "y", PosY },

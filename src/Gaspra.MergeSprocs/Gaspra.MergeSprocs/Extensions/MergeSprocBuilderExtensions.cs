@@ -1,4 +1,6 @@
 ﻿using Gaspra.MergeSprocs.Models;
+using Gaspra.MergeSprocs.Models.Database;
+using Gaspra.MergeSprocs.Models.Merge;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,28 +10,28 @@ namespace Gaspra.MergeSprocs.Extensions
 {
     public static class MergeSprocBuilderExtensions
     {
-        public static string BuildMergeSproc(this MergeProcedureVariables variables)
+        public static string BuildMergeSproc(this MergeVariables variables)
         {
             var sproc = "";
 
             if (variables.MergeIdentifierColumns.Any())
             {
                 sproc = $@"{General.Head()}
-{TableType.Head(variables.TableTypeName, variables.SchemaName)}
-{TableType.Body(variables.TableTypeName, variables.SchemaName, variables.TableTypeColumns)}
-{TableType.Tail(variables.TableTypeName, variables.SchemaName)}
-{MergeSproc.Head(variables.SchemaName, variables.ProcedureName, variables.TableTypeVariableName, variables.TableTypeName)}";
+{TableType.Head(variables.TableTypeName(), variables.SchemaName)}
+{TableType.Body(variables.TableTypeName(), variables.SchemaName, variables.TableTypeColumns)}
+{TableType.Tail(variables.TableTypeName(), variables.SchemaName)}
+{MergeSproc.Head(variables.SchemaName, variables.ProcedureName(), variables.TableTypeVariableName(), variables.TableTypeName())}";
 
-                if(variables.JoiningColumns != null && variables.JoiningColumns.Any())
+                if(variables.TablesToJoin != null && variables.TablesToJoin.Any())
                 {
-                    sproc += $@"{MergeSproc.TableVariable(variables.ProcedureName, variables.DatabaseTable, variables.TableTypeVariableName, variables.JoiningColumns)}
-{MergeSproc.Body($"{variables.ProcedureName}Variable", variables.MergeIdentifierColumns.First().Name, variables.DatabaseTable)}";
+                    sproc += $@"{MergeSproc.TableVariable(variables.ProcedureName(), variables.Table, variables.TableTypeVariableName(), variables.SchemaName, variables.TablesToJoin)}
+{MergeSproc.Body($"{variables.ProcedureName()}Variable", variables.MergeIdentifierColumns.First().Name, variables.Table, variables.SchemaName)}";
                 } else
                 {
-                    sproc += $"{MergeSproc.Body(variables.TableTypeVariableName, variables.MergeIdentifierColumns.First().Name, variables.DatabaseTable)}";
+                    sproc += $"{MergeSproc.Body(variables.TableTypeVariableName(), variables.MergeIdentifierColumns.First().Name, variables.Table, variables.SchemaName)}";
                 }
 
-                sproc += $@"{MergeSproc.Tail(variables.SchemaName, variables.ProcedureName)}"; //got to figure out how to use the table type columns in the merge body (getting id's for columns that don't exist)
+                sproc += $@"{MergeSproc.Tail(variables.SchemaName, variables.ProcedureName())}"; //got to figure out how to use the table type columns in the merge body (getting id's for columns that don't exist)
             }
             return sproc;
         }
@@ -55,12 +57,12 @@ GO
 ";
             }
 
-            public static string NullableColumn(DatabaseColumn column)
+            public static string NullableColumn(Column column)
             {
                 return column.Nullable ? "NULL" : "NOT NULL";
             }
 
-            public static string DataType(DatabaseColumn column)
+            public static string DataType(Column column)
             {
                 var dataType = $"[{column.DataType}]";
 
@@ -92,7 +94,7 @@ BEGIN
 ";
             }
 
-            public static string Body(string tableTypeName, string schemaName, IEnumerable<DatabaseColumn> columns)
+            public static string Body(string tableTypeName, string schemaName, IEnumerable<Column> columns)
             {
                 var body =
 $@"CREATE TYPE [{schemaName}].[{tableTypeName}] AS TABLE(
@@ -141,7 +143,7 @@ SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 ";
             }
 
-            public static string TableVariable(string sprocName, DatabaseTable databaseTable, string tableTypeVariable, IEnumerable<(DatabaseTable table, DatabaseColumn column)> JoiningTables)
+            public static string TableVariable(string sprocName, Table databaseTable, string tableTypeVariable, string schemaName, IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> tablesToJoin)
             {
                 var tableVariable =
 $@"DECLARE @{sprocName}Variable TABLE
@@ -154,26 +156,26 @@ SELECT
 {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"{GetInsertInto(c)}"))}
 FROM
     @{tableTypeVariable} AS tt
-INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", JoiningTables.Select(t => $"[{t.table.Schema}].[{t.table.Name}] AS {t.table.Name.ToLower()} ON tt.{t.column.Name}={t.table.Name.ToLower()}.{t.column.Name}"))}
+INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select(t => $"[{schemaName}].[{t.joinTable.Name}] AS {t.joinTable.Name.ToLower()} ON tt.{t.joinColumns.First().Name}={t.joinTable.Name.ToLower()}.{t.joinColumns.First().Name}"))}
 
 ";
                 return tableVariable;
             }
 
-            private static string GetInsertInto(DatabaseColumn column)
+            private static string GetInsertInto(Column column)
             {//todo
-                if(column.Name.Equals("OrderFactId"))
-                {
-                    return $"orderfact.OrderFactId";
-                }
+                //if(column.Name.Equals("OrderFactId"))
+                //{
+                //    return $"orderfact.OrderFactId";
+                //}
 
                 return column.Name;
             }
 
-            public static string Body(string tableTypeVariable, string matchOn, DatabaseTable databaseTable)
+            public static string Body(string tableTypeVariable, string matchOn, Table databaseTable, string schemaName)
             {
                 var sproc =
-$@"MERGE [{databaseTable.Schema}].[{databaseTable.Name}] AS t
+$@"MERGE [{schemaName}].[{databaseTable.Name}] AS t
 USING @{tableTypeVariable} AS s
     ON (t.{matchOn} = s.{matchOn})
 

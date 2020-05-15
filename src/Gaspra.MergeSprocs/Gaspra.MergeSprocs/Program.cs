@@ -1,5 +1,4 @@
 ﻿using Gaspra.Logging.Builder;
-using Gaspra.MergeSprocs.Generators;
 using Gaspra.MergeSprocs.DataAccess;
 using Gaspra.MergeSprocs.DataAccess.Interfaces;
 using Gaspra.Signing;
@@ -9,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using Gaspra.MergeSprocs.Interfaces;
 
 namespace Gaspra.MergeSprocs
 {
@@ -45,7 +43,6 @@ namespace Gaspra.MergeSprocs
                     .RegisterSecretSigningCertificateOptionFromConfiguration(host.Configuration)
                     .RegisterSigningServices()
                     .AddSingleton<IDataAccess, AnalyticsDataAccess>()
-                    .AddSingleton<IMergeProcedureGenerator, MergeProcedureGenerator>()
                     .AddHostedService<MergeSprocsService>();
             });
     }
