@@ -26,13 +26,43 @@ namespace Gaspra.MergeSprocs.Miro
             miroEndpoints = RestService.For<IMiroEndpoints>(httpClient);
         }
 
+        private int TablesConnected(Schema schema, TableTree tree, Table table, int depth)
+        {
+            var totalConnected = 0;
+
+            var nextDepth = depth + 1;
+
+            var connected = tree.Branches.Where(b => b.depth.Equals(nextDepth) && b.dependencies.ConstrainedToTables.Any(c => c.Name.Equals(table.Name)));
+
+            totalConnected += connected.Count();
+
+            foreach(var connect in connected)
+            {
+                totalConnected += TablesConnected(schema, tree, connect.dependencies.CurrentTable, nextDepth);
+            }
+
+            return totalConnected;
+        }
+
         public async Task Draw(Schema schema, TableTree tree)
         {
-            int rowNum = 0;
-
             int colNum = 0;
 
             var maxDepth = tree.Branches.Select(b => b.depth).OrderByDescending(b => b).First();
+
+            var maxConnections = 0;
+
+            foreach(var table in tree.Branches.Where(b => b.depth.Equals(1)).Select(b => b.dependencies.CurrentTable))
+            {
+                var connected = TablesConnected(schema, tree, table, 1);
+
+                if(connected > maxConnections)
+                {
+                    maxConnections = connected;
+                }
+            }
+
+            var tableDrawn = new List<string>();
 
             for(var depth = 1; depth < maxDepth+1; depth++)
             {
@@ -40,52 +70,57 @@ namespace Gaspra.MergeSprocs.Miro
 
                 foreach (var table in tablesAtDepth)
                 {
-                    var miroShapeTableHeader = new MiroShape
+                    if(!tableDrawn.Contains(table.Name))
                     {
-                        PosX = colNum * 500,
-                        PosY = depth * 600,
-                        Width = 300,
-                        Height = 40,
-                        Text = $"<b>{table.Name}</b>",
-                        Style = new Dictionary<string, object>
+                        var miroShapeTableHeader = new MiroShape
                         {
-                            { "backgroundColor", "#f09800" },
-                            { "borderOpacity", 0.0 },
-                            { "fontSize", 16 },
-                            { "textColor", "#ebebeb" },
-                            { "textAlign", "left" }
-                        }
-                    };
+                            PosX = colNum * 500,
+                            PosY = depth * 600,
+                            Width = 300,
+                            Height = 40,
+                            Text = $"<b>{table.Name}</b>",
+                            Style = new Dictionary<string, object>
+                            {
+                                { "backgroundColor", "#f09800" },
+                                { "borderOpacity", 0.0 },
+                                { "fontSize", 16 },
+                                { "textColor", "#ebebeb" },
+                                { "textAlign", "left" }
+                            }
+                        };
 
-                    await DrawWidget(miroShapeTableHeader.ToDictionary(), table.Name);
+                        await DrawWidget(miroShapeTableHeader.ToDictionary(), table.Name);
 
-                    /*
-                        font size 16 can draw 16 rows per 400 height. About 25px line height
+                        tableDrawn.Add(table.Name);
 
-                        posy offset is (header+body / 2)
-                     */
+                        /*
+                            font size 16 can draw 16 rows per 400 height. About 25px line height
 
-                    var miroShapeTableColumns = new MiroShape
-                    {
-                        PosX = colNum * 500,
-                        PosY = (depth * 600) + ((table.Columns.Count() * 25) / 2) + 20,
-                        Width = 300,
-                        Height = table.Columns.Count() * 25,
-                        Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
-                        Style = new Dictionary<string, object>
+                            posy offset is (header+body / 2)
+                         */
+
+                        var miroShapeTableColumns = new MiroShape
                         {
-                            { "backgroundColor", "#00246b" },
-                            { "borderOpacity", 0.0 },
-                            { "fontSize", 16 },
-                            { "textColor", "#ebebeb" },
-                            { "textAlign", "left" },
-                            { "textAlignVertical", "top" }
-                        }
-                    };
+                            PosX = colNum * 500,
+                            PosY = (depth * 600) + ((table.Columns.Count() * 25) / 2) + 20,
+                            Width = 300,
+                            Height = table.Columns.Count() * 25,
+                            Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
+                            Style = new Dictionary<string, object>
+                            {
+                                { "backgroundColor", "#00246b" },
+                                { "borderOpacity", 0.0 },
+                                { "fontSize", 16 },
+                                { "textColor", "#ebebeb" },
+                                { "textAlign", "left" },
+                                { "textAlignVertical", "top" }
+                            }
+                        };
 
-                    await DrawWidget(miroShapeTableColumns.ToDictionary(), $"{table.Name} columns");
+                        await DrawWidget(miroShapeTableColumns.ToDictionary(), $"{table.Name} columns");
 
-                    ++colNum;
+                        ++colNum;
+                    }
                 }
 
                 colNum = 0;
