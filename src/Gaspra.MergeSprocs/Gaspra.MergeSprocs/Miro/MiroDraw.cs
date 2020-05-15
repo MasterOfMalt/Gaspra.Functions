@@ -68,9 +68,9 @@ namespace Gaspra.MergeSprocs.Miro
                     var miroShapeTableColumns = new MiroShape
                     {
                         PosX = colNum * 500,
-                        PosY = (depth * 600) + 220,
+                        PosY = (depth * 600) + ((table.Columns.Count() * 25) / 2) + 20,
                         Width = 300,
-                        Height = 400,
+                        Height = table.Columns.Count() * 25,
                         Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
                         Style = new Dictionary<string, object>
                         {
@@ -113,12 +113,12 @@ namespace Gaspra.MergeSprocs.Miro
                     {
                         var linkId = widgets.Data.Where(w => w.Text.Equals($"<b>{link.Name}</b>")).FirstOrDefault();
 
-                        linksDrawn
+                        var linksDrawnContains = linksDrawn
                             .Where(l =>
-                                (l.Item1.Equals(tableId) && l.Item2.Equals(linkId) ||
-                                (l.Item1.Equals(linkId) && l.Item2.Equals(tableId))));
+                                (l.Item1.Equals(tableId.Text) && l.Item2.Equals(linkId.Text) ||
+                                (l.Item1.Equals(linkId.Text) && l.Item2.Equals(tableId.Text))));
 
-                        if (linkId != null && !linksDrawn.Any())
+                        if (linkId != null && !linksDrawnContains.Any())
                         {
                             var miroLine = new MiroLine
                             {
