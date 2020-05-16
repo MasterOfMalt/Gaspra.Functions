@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Threading;
+using System.Drawing;
 
 namespace Gaspra.MergeSprocs.Miro
 {
@@ -26,22 +27,37 @@ namespace Gaspra.MergeSprocs.Miro
             miroEndpoints = RestService.For<IMiroEndpoints>(httpClient);
         }
 
-        private int TablesConnected(Schema schema, TableTree tree, Table table, int depth)
+        private IEnumerable<(int depth, Table table)> TableObjectsConnected(Schema schema, TableTree tree, Table table, int depth)
         {
-            var totalConnected = 0;
+            var connectedTables = new List<(int depth, Table table)>();
 
             var nextDepth = depth + 1;
 
             var connected = tree.Branches.Where(b => b.depth.Equals(nextDepth) && b.dependencies.ConstrainedToTables.Any(c => c.Name.Equals(table.Name)));
 
-            totalConnected += connected.Count();
+            connectedTables.AddRange(connected.Select(b => (nextDepth, b.dependencies.CurrentTable)));
 
-            foreach(var connect in connected)
+            foreach (var connect in connected)
             {
-                totalConnected += TablesConnected(schema, tree, connect.dependencies.CurrentTable, nextDepth);
+                connectedTables.AddRange(TableObjectsConnected(schema, tree, connect.dependencies.CurrentTable, nextDepth));
             }
 
-            return totalConnected;
+            return connectedTables.Distinct();
+        }
+
+        private static List<PointF> GetCircularPoints(double radius, PointF center, double angleInterval)
+        {
+            List<PointF> points = new List<PointF>();
+
+            for (double interval = angleInterval; interval < 2 * Math.PI; interval += angleInterval)
+            {
+                double X = center.X + (radius * Math.Cos(interval));
+                double Y = center.Y + (radius * Math.Sin(interval));
+
+                points.Add(new PointF((float)X, (float)Y));
+            }
+
+            return points;
         }
 
         public async Task Draw(Schema schema, TableTree tree)
@@ -50,36 +66,47 @@ namespace Gaspra.MergeSprocs.Miro
 
             var maxDepth = tree.Branches.Select(b => b.depth).OrderByDescending(b => b).First();
 
-            var maxConnections = 0;
+            var setsOfConnections = new List<List<(int depth, Table table)>>();
 
             foreach(var table in tree.Branches.Where(b => b.depth.Equals(1)).Select(b => b.dependencies.CurrentTable))
             {
-                var connected = TablesConnected(schema, tree, table, 1);
+                var tableConnections = TableObjectsConnected(schema, tree, table, 1).ToList();
 
-                if(connected > maxConnections)
-                {
-                    maxConnections = connected;
-                }
+                tableConnections.Add((1, table));
+
+                setsOfConnections.Add(tableConnections);
             }
 
             var tableDrawn = new List<string>();
 
-            for(var depth = 1; depth < maxDepth+1; depth++)
-            {
-                var tablesAtDepth = tree.Branches.Where(b => b.depth.Equals(depth)).Select(b => b.dependencies.CurrentTable);
+            var setCount = 0;
 
-                foreach (var table in tablesAtDepth)
+            foreach (var set in setsOfConnections)
+            {
+                var depthRange = set.Select(s => s.depth).OrderByDescending(s => s).First();
+
+                var highestDepthSet = set.GroupBy(s => s.depth).Select(s => s).Select(s => (s.Key, s.Count()));
+
+                for(var depth = 1; depth < depthRange+1; depth++)
                 {
-                    if(!tableDrawn.Contains(table.Name))
+                    var tablesAtDepth = set.Where(s => s.depth.Equals(depth)).Select(s => s.table);
+
+                    var circularPoints = GetCircularPoints(1000 * (depth - 1), new PointF(setCount, 0), ((2*Math.PI)-1) / tablesAtDepth.Count());
+
+                    var tableCount = 0;
+
+                    foreach (var table in tablesAtDepth)
                     {
-                        var miroShapeTableHeader = new MiroShape
+                        if (!tableDrawn.Contains(table.Name))
                         {
-                            PosX = colNum * 500,
-                            PosY = depth * 600,
-                            Width = 300,
-                            Height = 40,
-                            Text = $"<b>{table.Name}</b>",
-                            Style = new Dictionary<string, object>
+                            var miroShapeTableHeader = new MiroShape
+                            {
+                                PosX = (int)circularPoints[tableCount].X,
+                                PosY = (int)circularPoints[tableCount].Y,
+                                Width = 300,
+                                Height = 40,
+                                Text = $"<b>{table.Name}</b>",
+                                Style = new Dictionary<string, object>
                             {
                                 { "backgroundColor", "#f09800" },
                                 { "borderOpacity", 0.0 },
@@ -87,26 +114,26 @@ namespace Gaspra.MergeSprocs.Miro
                                 { "textColor", "#ebebeb" },
                                 { "textAlign", "left" }
                             }
-                        };
+                            };
 
-                        await DrawWidget(miroShapeTableHeader.ToDictionary(), table.Name);
+                            await DrawWidget(miroShapeTableHeader.ToDictionary(), table.Name);
 
-                        tableDrawn.Add(table.Name);
+                            tableDrawn.Add(table.Name);
 
-                        /*
-                            font size 16 can draw 16 rows per 400 height. About 25px line height
+                            /*
+                                font size 16 can draw 16 rows per 400 height. About 25px line height
 
-                            posy offset is (header+body / 2)
-                         */
+                                posy offset is (header+body / 2)
+                             */
 
-                        var miroShapeTableColumns = new MiroShape
-                        {
-                            PosX = colNum * 500,
-                            PosY = (depth * 600) + ((table.Columns.Count() * 25) / 2) + 20,
-                            Width = 300,
-                            Height = table.Columns.Count() * 25,
-                            Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
-                            Style = new Dictionary<string, object>
+                            var miroShapeTableColumns = new MiroShape
+                            {
+                                PosX = (int)circularPoints[tableCount].X,
+                                PosY = (int)circularPoints[tableCount].Y + ((table.Columns.Count() * 25) / 2) + 20,
+                                Width = 300,
+                                Height = table.Columns.Count() * 25,
+                                Text = $"{string.Join("", table.Columns.Select(c => $"<p>{c.Name} [{c.DataType}]</p>"))}",
+                                Style = new Dictionary<string, object>
                             {
                                 { "backgroundColor", "#00246b" },
                                 { "borderOpacity", 0.0 },
@@ -115,15 +142,20 @@ namespace Gaspra.MergeSprocs.Miro
                                 { "textAlign", "left" },
                                 { "textAlignVertical", "top" }
                             }
-                        };
+                            };
 
-                        await DrawWidget(miroShapeTableColumns.ToDictionary(), $"{table.Name} columns");
+                            await DrawWidget(miroShapeTableColumns.ToDictionary(), $"{table.Name} columns");
 
-                        ++colNum;
+                            ++colNum;
+
+                            tableCount++;
+                        }
                     }
+
+                    colNum = 0;
                 }
 
-                colNum = 0;
+                setCount+=5000;
             }
 
             var widgetsJson = await miroEndpoints.GetWidgets();
