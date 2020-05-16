@@ -4,7 +4,7 @@ using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Gaspra.MergeSprocs.Miro
+namespace Gaspra.MergeSprocs.Miro.Models
 {
     public partial class Widgets
     {

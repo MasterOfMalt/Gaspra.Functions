@@ -44,21 +44,18 @@ namespace Gaspra.MergeSprocs
             /*
              * build up database objects
              */
-            var columnInfo = await dataAccess.GetColumnInformation();
+            var columnInfo = (await dataAccess.GetColumnInformation()).ToList();
 
-            var fkInfo = await dataAccess.GetFKConstraintInformation();
+            var fkInfo = (await dataAccess.GetFKConstraintInformation()).ToList();
 
-            var extendedProps = await dataAccess.GetExtendedProperties();
+            var extendedProps = (await dataAccess.GetExtendedProperties()).ToList();
 
-            var database = Schema.From(columnInfo, extendedProps, fkInfo);
+            var database = Schema
+                .From(columnInfo, extendedProps, fkInfo);
 
             database
                 .First()
                 .CalculateDependencies();
-
-            var dependencyTree = DependencyTree.Calculate(database.First());
-
-            logger.LogInformation("calculated schema");
 
             /*
              * save them out to json
@@ -74,6 +71,34 @@ namespace Gaspra.MergeSprocs
                     }));
 
             logger.LogInformation("output: analytics.database.json");
+
+            /*
+             * calculate dependency tree and build data structure
+             */
+            var dependencyTree = DependencyTree
+                .Calculate(database.First());
+
+            var dataStructure = new DataStructure(database.First(), dependencyTree);
+
+            logger.LogInformation("calculated data structure");
+
+            /*
+             * save data structure out to json
+             */
+            WriteFile(
+                "analytics.datastructure.json",
+                JsonConvert.SerializeObject(
+                    dataStructure,
+                    Formatting.Indented,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    }));
+
+            logger.LogInformation("output: analytics.datastructure.json");
+
+            var drawDataStructure = new DrawDataStructure();
+            await drawDataStructure.DrawToMiro(dataStructure);
 
             /*
              * Calculate tree of tables

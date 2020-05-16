@@ -10,6 +10,9 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Threading;
 using System.Drawing;
+using Gaspra.MergeSprocs.Models.Merge;
+using Gaspra.MergeSprocs.Miro.Models;
+using Gaspra.MergeSprocs.Miro.Extensions;
 
 namespace Gaspra.MergeSprocs.Miro
 {
@@ -45,21 +48,6 @@ namespace Gaspra.MergeSprocs.Miro
             return connectedTables.Distinct();
         }
 
-        private static List<PointF> GetCircularPoints(double radius, PointF center, double angleInterval)
-        {
-            List<PointF> points = new List<PointF>();
-
-            for (double interval = angleInterval; interval < 2 * Math.PI; interval += angleInterval)
-            {
-                double X = center.X + (radius * Math.Cos(interval));
-                double Y = center.Y + (radius * Math.Sin(interval));
-
-                points.Add(new PointF((float)X, (float)Y));
-            }
-
-            return points;
-        }
-
         public async Task Draw(Schema schema, TableTree tree)
         {
             int colNum = 0;
@@ -91,7 +79,7 @@ namespace Gaspra.MergeSprocs.Miro
                 {
                     var tablesAtDepth = set.Where(s => s.depth.Equals(depth)).Select(s => s.table);
 
-                    var circularPoints = GetCircularPoints(1000 * (depth - 1), new PointF(setCount, 0), ((2*Math.PI)-1) / tablesAtDepth.Count());
+                    var circularPoints = MiroExtensions.GetCircularPoints(1000 * (depth - 1), new PointF(setCount, 0), ((2*Math.PI)-1) / tablesAtDepth.Count());
 
                     var tableCount = 0;
 
@@ -230,64 +218,6 @@ namespace Gaspra.MergeSprocs.Miro
 
                 await DrawWidget(widget, name);
             }
-        }
-    }
-
-
-
-    public class MiroShape
-    {
-        public string Type { get; set; } = "shape";
-        public int PosX { get; set; } = 0;
-        public int PosY { get; set; } = 0;
-        public int Width { get; set; } = 300;
-        public int Height { get; set; } = 400;
-        public string Text { get; set; } = "";
-        public Dictionary<string, object> Style { get; set; } = null;
-
-        public Dictionary<string, object> ToDictionary()
-        {
-            var shapeAsDict = new Dictionary<string, object>
-            {
-                { "type", Type },
-                { "x", PosX },
-                { "y", PosY },
-                { "width", Width },
-                { "height", Height },
-                { "text", Text }
-            };
-
-            if(Style != null)
-            {
-                shapeAsDict.Add("style", Style);
-            }
-
-            return shapeAsDict;
-        }
-    }
-
-    public class MiroLine
-    {
-        public string Type { get; set; } = "line";
-        public string StartId { get; set; }
-        public string EndId { get; set; }
-        public Dictionary<string, object> Style { get; set; } = null;
-
-        public Dictionary<string, object> ToDictionary()
-        {
-            var lineAsDict = new Dictionary<string, object>
-            {
-                { "type", Type },
-                { "startWidget", new Dictionary<string, object> { { "id", StartId } } },
-                { "endWidget", new Dictionary<string, object> { { "id", EndId } } }
-            };
-
-            if(Style != null)
-            {
-                lineAsDict.Add("style", Style);
-            }
-
-            return lineAsDict;
         }
     }
 }

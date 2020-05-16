@@ -11,15 +11,15 @@ namespace Gaspra.MergeSprocs.Models.Database
     {
         public Guid CorrelationId { get; set; }
         public string Name { get; set; }
-        public IEnumerable<Column> Columns { get; set; }
-        public IEnumerable<ExtendedProperty> ExtendedProperties { get; set; }
-        public IEnumerable<Guid> ConstrainedTo { get; set; }
+        public IList<Column> Columns { get; set; }
+        public IList<ExtendedProperty> ExtendedProperties { get; set; }
+        public IList<Guid> ConstrainedTo { get; set; }
 
         public Table(
             Guid correlationId,
             string name,
-            IEnumerable<Column> columns,
-            IEnumerable<ExtendedProperty> extendedProperties)
+            IList<Column> columns,
+            IList<ExtendedProperty> extendedProperties)
         {
             CorrelationId = correlationId;
 
@@ -28,10 +28,10 @@ namespace Gaspra.MergeSprocs.Models.Database
             ExtendedProperties = extendedProperties;
         }
 
-        public static IEnumerable<Table> From(
-            IEnumerable<ColumnInformation> columnInformation,
-            IEnumerable<ExtendedPropertyInformation> extendedPropertyInformation,
-            IEnumerable<FKConstraintInformation> foreignKeyConstraintInformation)
+        public static IList<Table> From(
+            IList<ColumnInformation> columnInformation,
+            IList<ExtendedPropertyInformation> extendedPropertyInformation,
+            IList<FKConstraintInformation> foreignKeyConstraintInformation)
         {
             var distinctTables = columnInformation.Distinct(new ColumnComparerByTableName());
 
@@ -43,7 +43,8 @@ namespace Gaspra.MergeSprocs.Models.Database
                         .Where(e => e.ObjectName.Equals(c.TableName))
                         .Select(e => new ExtendedProperty(
                                 Guid.NewGuid(), e.PropertyName, e.Value
-                            ));
+                            ))
+                        .ToList();
 
                     return new Table(
                             Guid.NewGuid(),
@@ -51,7 +52,8 @@ namespace Gaspra.MergeSprocs.Models.Database
                             Column.From(c.TableName, columnInformation, foreignKeyConstraintInformation),
                             extendedProperties
                         );
-                });
+                })
+                .ToList();
 
             return tables;
         }

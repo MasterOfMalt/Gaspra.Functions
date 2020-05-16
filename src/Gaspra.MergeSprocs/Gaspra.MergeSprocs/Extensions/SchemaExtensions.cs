@@ -21,7 +21,8 @@ namespace Gaspra.MergeSprocs.Extensions
                     .Where(t => foreignKeys
                         .SelectMany(f => f.ConstrainedTo)
                         .Contains(t.Name))
-                    .Select(t => t.CorrelationId);
+                    .Select(t => t.CorrelationId)
+                    .ToList();
 
                 table.ConstrainedTo = constrainedToTables;
             }

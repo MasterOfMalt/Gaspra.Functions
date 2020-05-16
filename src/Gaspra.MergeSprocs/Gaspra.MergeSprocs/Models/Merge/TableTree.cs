@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Gaspra.MergeSprocs.Models.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace Gaspra.MergeSprocs.Models.Database
+namespace Gaspra.MergeSprocs.Models.Merge
 {
     public class TableTree
     {

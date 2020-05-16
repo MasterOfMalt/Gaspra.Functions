@@ -61,15 +61,12 @@ namespace Gaspra.MergeSprocs.Models.Tree
                 }
             }
 
-            return branchesAtCurrentDepth.ToList().Distinct();
-
-                //.Select(b => schema.Tables.Where(t => t.CorrelationId.Equals(b))
-                //.First()
-                //.ConstrainedTo;
-                //
-                //.SelectMany(d => d.ConstrainedToTables)
-                //.Where(t => !branchedDependencies.Select(d => d.dependencies.CurrentTable).Any(d => d.Name.Equals(t.Name)));
-
+            return branchesAtCurrentDepth
+                .ToList()
+                /*
+                 * distinct stops cyclic dependencies
+                 */
+                .Distinct();
         }
     }
 }

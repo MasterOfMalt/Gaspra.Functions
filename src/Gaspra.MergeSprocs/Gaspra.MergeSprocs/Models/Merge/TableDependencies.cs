@@ -1,18 +1,18 @@
-﻿using System;
+﻿using Gaspra.MergeSprocs.Models.Database;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace Gaspra.MergeSprocs.Models.Database
+namespace Gaspra.MergeSprocs.Models.Merge
 {
     public class TableDependencies
     {
         public Table CurrentTable { get; set; }
-        public IEnumerable<Table> ConstrainedToTables { get; set; }
+        public IList<Table> ConstrainedToTables { get; set; }
 
         public TableDependencies(
             Table currentTable,
-            IEnumerable<Table> constrainedToTables)
+            IList<Table> constrainedToTables)
         {
             CurrentTable = currentTable;
             ConstrainedToTables = constrainedToTables;
@@ -26,7 +26,8 @@ namespace Gaspra.MergeSprocs.Models.Database
                 .Tables
                 .Where(t => foreignKeys
                     .SelectMany(f => f.ConstrainedTo)
-                    .Contains(t.Name));
+                    .Contains(t.Name))
+                .ToList();
 
             return new TableDependencies(
                 table,

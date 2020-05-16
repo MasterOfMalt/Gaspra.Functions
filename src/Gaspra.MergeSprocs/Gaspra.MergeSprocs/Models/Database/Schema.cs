@@ -11,23 +11,23 @@ namespace Gaspra.MergeSprocs.Models.Database
     {
         public Guid CorrelationId { get; set; }
         public string Name { get; set; }
-        public IEnumerable<Table> Tables { get; set; }
+        public IList<Table> Tables { get; set; }
 
         public Schema(
             Guid correlationId,
             string name,
-            IEnumerable<Table> tables)
+            IList<Table> tables)
         {
             CorrelationId = correlationId;
 
             Name = name;
-            Tables = tables;
+            Tables = tables.ToList();
         }
 
-        public static IEnumerable<Schema> From(
-            IEnumerable<ColumnInformation> columnInformation,
-            IEnumerable<ExtendedPropertyInformation> extendedPropertyInformation,
-            IEnumerable<FKConstraintInformation> foreignKeyConstraintInformation)
+        public static IList<Schema> From(
+            IList<ColumnInformation> columnInformation,
+            IList<ExtendedPropertyInformation> extendedPropertyInformation,
+            IList<FKConstraintInformation> foreignKeyConstraintInformation)
         {
             var schemas = columnInformation
                 .Distinct(new ColumnComparerBySchemaName())
@@ -41,7 +41,8 @@ namespace Gaspra.MergeSprocs.Models.Database
                             extendedPropertyInformation,
                             foreignKeyConstraintInformation)
                         );
-                });
+                })
+                .ToList();
 
             return schemas;
         }

@@ -52,10 +52,10 @@ namespace Gaspra.MergeSprocs.Models.Database
             ForeignKey = foreignKey;
         }
 
-        public static IEnumerable<Column> From(
+        public static IList<Column> From(
             string tableName,
-            IEnumerable<ColumnInformation> columnInformation,
-            IEnumerable<FKConstraintInformation> foreignKeyInformation)
+            IList<ColumnInformation> columnInformation,
+            IList<FKConstraintInformation> foreignKeyInformation)
         {
             var columns = columnInformation
                 .Where(c => c.TableName.Equals(tableName))
@@ -100,7 +100,8 @@ namespace Gaspra.MergeSprocs.Models.Database
                         c.DefaultValue,
                         foreignKey
                         );
-                });
+                })
+                .ToList();
 
             return columns;
         }
