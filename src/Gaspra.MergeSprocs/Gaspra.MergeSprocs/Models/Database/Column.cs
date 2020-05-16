@@ -1,11 +1,14 @@
 ﻿using Gaspra.MergeSprocs.DataAccess.Models;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Gaspra.MergeSprocs.Models.Database
 {
-    public class Column
+    public class Column : IEquatable<Column>
     {
+        public Guid CorrelationId { get; set; }
         public int Id { get; set; }
         public string Name { get; set; }
         public bool Nullable { get; set; }
@@ -20,6 +23,7 @@ namespace Gaspra.MergeSprocs.Models.Database
         public ForeignKeyConstraint ForeignKey { get; set; }
 
         public Column(
+            Guid correlationId,
             int id,
             string name,
             bool nullable,
@@ -33,6 +37,7 @@ namespace Gaspra.MergeSprocs.Models.Database
             string defaultValue,
             ForeignKeyConstraint foreignKey)
         {
+            CorrelationId = correlationId;
             Id = id;
             Name = name;
             Nullable = nullable;
@@ -63,24 +68,6 @@ namespace Gaspra.MergeSprocs.Models.Database
 
                     ForeignKeyConstraint foreignKey = null;
 
-                    //if(columnsForeignKey != null)
-                    //{
-                    //    var isParent = columnsForeignKey.ConstraintTableName.Equals(tableName);
-
-                    //    var constrainedTo =
-                    //        isParent ?
-                    //            foreignKeyInformation
-                    //                .Where(f => f.ConstraintTableName.Equals(tableName) &&
-                    //                            f.ConstraintTableColumn.Equals(c.ColumnName))
-                    //                .Select(f => f.ReferencedTableName) :
-                    //            foreignKeyInformation
-                    //                .Where(f => f.ReferencedTableName.Equals(tableName) &&
-                    //                            f.ReferencedTableColumn.Equals(c.ColumnName))
-                    //                .Select(f => f.ConstraintTableName);
-
-                    //    foreignKey = new ForeignKeyConstraint(isParent, constrainedTo);
-                    //}
-
                     if(foreignKeyInformation.Any(f => f.ConstraintTableName.Equals(tableName) || f.ReferencedTableName.Equals(tableName)))
                     {
                         var parentOf = foreignKeyInformation
@@ -95,10 +82,11 @@ namespace Gaspra.MergeSprocs.Models.Database
                         constrainedTo.AddRange(parentOf);
                         constrainedTo.AddRange(childOf);
 
-                        foreignKey = new ForeignKeyConstraint(constrainedTo);
+                        foreignKey = new ForeignKeyConstraint(Guid.NewGuid(), constrainedTo);
                     }
 
                     return new Column(
+                        Guid.NewGuid(),
                         c.ColumnId,
                         c.ColumnName,
                         c.Nullable,
@@ -115,6 +103,32 @@ namespace Gaspra.MergeSprocs.Models.Database
                 });
 
             return columns;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as Column);
+        }
+
+        public bool Equals([AllowNull] Column other)
+        {
+            return other != null &&
+                   CorrelationId.Equals(other.CorrelationId);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(CorrelationId);
+        }
+
+        public static bool operator ==(Column left, Column right)
+        {
+            return EqualityComparer<Column>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Column left, Column right)
+        {
+            return !(left == right);
         }
     }
 }

@@ -4,6 +4,7 @@ using Gaspra.MergeSprocs.Miro;
 using Gaspra.MergeSprocs.Models;
 using Gaspra.MergeSprocs.Models.Database;
 using Gaspra.MergeSprocs.Models.Merge;
+using Gaspra.MergeSprocs.Models.Tree;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -50,6 +51,12 @@ namespace Gaspra.MergeSprocs
             var extendedProps = await dataAccess.GetExtendedProperties();
 
             var database = Schema.From(columnInfo, extendedProps, fkInfo);
+
+            database
+                .First()
+                .CalculateDependencies();
+
+            var dependencyTree = DependencyTree.Calculate(database.First());
 
             logger.LogInformation("calculated schema");
 
