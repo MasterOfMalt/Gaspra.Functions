@@ -13,6 +13,5 @@ namespace Gaspra.MergeSprocs.Extensions
         {
             return branches.Select(b => b.TableGuid).Contains(table.CorrelationId);
         }
-
     }
 }

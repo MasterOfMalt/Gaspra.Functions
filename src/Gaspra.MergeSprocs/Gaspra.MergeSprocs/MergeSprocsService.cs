@@ -97,9 +97,6 @@ namespace Gaspra.MergeSprocs
 
             logger.LogInformation("output: analytics.datastructure.json");
 
-            var drawDataStructure = new DrawDataStructure();
-            await drawDataStructure.DrawToMiro(dataStructure);
-
             /*
              * Calculate tree of tables
              */
@@ -158,8 +155,10 @@ namespace Gaspra.MergeSprocs
              */
             if (bool.Parse(configuration.GetSection("miro")["draw"]))
             {
-                var miroDraw = new MiroDraw();
-                await miroDraw.Draw(database.First(), tree);
+                var drawDataStructure = new DrawDataStructure();
+                await drawDataStructure.DrawToMiro(dataStructure);
+                //var miroDraw = new MiroDraw();
+                //await miroDraw.Draw(database.First(), tree);
 
                 logger.LogInformation("drawn miro objects");
             }

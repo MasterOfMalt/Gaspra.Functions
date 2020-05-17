@@ -1,4 +1,5 @@
 ﻿using Gaspra.MergeSprocs.Models.Database;
+using Gaspra.MergeSprocs.Models.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,9 +31,21 @@ namespace Gaspra.MergeSprocs.Extensions
 
         public static IEnumerable<Table> GetTablesFrom(this Schema schema, IEnumerable<Guid> guids)
         {
-            var tables = schema.Tables.Where(t => guids.Contains(t.CorrelationId));
+            var tables = schema
+                .Tables
+                .Where(t => guids.Contains(t.CorrelationId));
 
             return tables;
+        }
+
+        public static Table GetTableFrom(this Schema schema, Guid guid)
+        {
+            var tables = schema
+                .Tables
+                .Where(t => guid.Equals(t.CorrelationId));
+
+            return tables
+                .FirstOrDefault();
         }
     }
 }
