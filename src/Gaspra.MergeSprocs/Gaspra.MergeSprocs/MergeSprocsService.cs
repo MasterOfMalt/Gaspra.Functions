@@ -98,28 +98,9 @@ namespace Gaspra.MergeSprocs
             logger.LogInformation("output: analytics.datastructure.json");
 
             /*
-             * Calculate tree of tables
-             */
-            var tree = TableTree.Build(database.First());
-
-            logger.LogInformation("calculated table tree");
-
-            WriteFile(
-                "analytics.database.tabletree.json",
-                JsonConvert.SerializeObject(
-                    tree,
-                    Formatting.Indented,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    }));
-
-            logger.LogInformation("output: analytics.database.tabletree.json");
-
-            /*
              * build up merge variables
              */
-            var mergeVariables = MergeVariables.From(database.First());
+            var mergeVariables = MergeVariables.From(dataStructure);
 
             logger.LogInformation("calculated merge variables");
 
@@ -157,8 +138,6 @@ namespace Gaspra.MergeSprocs
             {
                 var drawDataStructure = new DrawDataStructure();
                 await drawDataStructure.DrawToMiro(dataStructure);
-                //var miroDraw = new MiroDraw();
-                //await miroDraw.Draw(database.First(), tree);
 
                 logger.LogInformation("drawn miro objects");
             }

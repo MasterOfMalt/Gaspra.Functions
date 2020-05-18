@@ -54,9 +54,17 @@ namespace Gaspra.MergeSprocs.Models.Tree
                 {
                     if (!branches.ContainsTable(constrainedTable))
                     {
-                        branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
+                        /*
+                         * todo:
+                         * handle link tables
+                         */
+                        //if(!constrainedTable.Name.EndsWith("Link"))
+                        //{
+                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
 
-                        branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
+                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
+                        //}
+
                     }
                 }
             }

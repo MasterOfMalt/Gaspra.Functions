@@ -1,21 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Text;
 
 namespace Gaspra.MergeSprocs.Models.Database
 {
+    /*
+     * Clean up the child/ parent, this could probably be better represented
+     * with a flag saying the constraint is the parent, or just constrained to
+     */
     public class ForeignKeyConstraint : IEquatable<ForeignKeyConstraint>
     {
         public Guid CorrelationId { get; set; }
+        public IEnumerable<string> ChildConstraints { get; set; }
+        public IEnumerable<string> ParentConstraints { get; set; }
         public IEnumerable<string> ConstrainedTo { get; set; }
-
         public ForeignKeyConstraint(
             Guid correlationId,
-            IEnumerable<string> constrainedTo)
+            IEnumerable<string> childConstraints,
+            IEnumerable<string> parentConstraints)
         {
             CorrelationId = correlationId;
-            ConstrainedTo = constrainedTo;
+            ChildConstraints = childConstraints;
+            ParentConstraints = parentConstraints;
+
+            //todo: clean up this mess
+            var constrainedList = new List<string>();
+            var childList = childConstraints.ToList();
+            var parentList = parentConstraints.ToList();
+
+            constrainedList.AddRange(childList);
+            constrainedList.AddRange(parentList);
+
+            ConstrainedTo = constrainedList
+                .Distinct();
         }
 
         public override bool Equals(object obj)

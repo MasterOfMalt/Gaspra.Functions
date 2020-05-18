@@ -22,6 +22,9 @@ namespace Gaspra.MergeSprocs.Extensions
                     .Where(t => foreignKeys
                         .SelectMany(f => f.ConstrainedTo)
                         .Contains(t.Name))
+
+                    //.Where(t => !t.Name.EndsWith("link"))
+
                     .Select(t => t.CorrelationId)
                     .ToList();
 

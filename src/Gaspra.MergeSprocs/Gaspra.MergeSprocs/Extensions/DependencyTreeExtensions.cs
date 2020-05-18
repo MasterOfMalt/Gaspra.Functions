@@ -45,5 +45,18 @@ namespace Gaspra.MergeSprocs.Extensions
 
             return childrenTables;
         }
+
+        public static IEnumerable<DependencyBranch> GetRelatedBranches(this DependencyTree tree, Table table)
+        {
+            var constrainedTableGuids = table
+                .ConstrainedTo;
+
+            var relatedBranches = tree
+                .Branches
+                .Where(b => constrainedTableGuids
+                    .Any(c => c.Equals(b.TableGuid)));
+
+            return relatedBranches;
+        }
     }
 }

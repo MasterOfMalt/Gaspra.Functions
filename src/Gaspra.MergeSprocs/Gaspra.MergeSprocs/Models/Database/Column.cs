@@ -78,11 +78,7 @@ namespace Gaspra.MergeSprocs.Models.Database
                             .Where(f => f.ReferencedTableName.Equals(tableName) && f.ReferencedTableColumn.Equals(c.ColumnName))
                             .Select(f => f.ConstraintTableName);
 
-                        var constrainedTo = new List<string>();
-                        constrainedTo.AddRange(parentOf);
-                        constrainedTo.AddRange(childOf);
-
-                        foreignKey = new ForeignKeyConstraint(Guid.NewGuid(), constrainedTo);
+                        foreignKey = new ForeignKeyConstraint(Guid.NewGuid(), childOf, parentOf);
                     }
 
                     return new Column(

@@ -98,6 +98,8 @@ namespace Gaspra.MergeSprocs.Miro
 
                 centerPoint = tableDrawn.Where(td => td.Item1.Equals(parentTable.Name)).FirstOrDefault().Item2;
 
+                var numberOfChildren = tableGroups.AllChildren(tableGroup);
+
                 var circularPoints = MiroExtensions.GetCircularPoints(9000 - (tableGroup.Depth * 2500), centerPoint, ((2 * Math.PI) - 1) / tableGroup.Children.Count());
 
                 var circularCount = 0;
@@ -128,11 +130,12 @@ namespace Gaspra.MergeSprocs.Miro
 
             foreach (var table in dataStructure.Schema.Tables)
             {
-                var dependencies = TableDependencies.From(table, dataStructure.Schema);
+                //var dependencies = TableDependencies.From(table, dataStructure.Schema);
 
-                var links = dependencies
-                    .ConstrainedToTables
-                    .ToList();
+                var links = new List<Table>();
+                    //dependencies
+                    //.ConstrainedToTables
+                    //.ToList();
 
                 var tableId = widgets.Data.Where(w => w.Text.Equals($"<b>{table.Name}</b>")).FirstOrDefault();
 
@@ -256,6 +259,23 @@ namespace Gaspra.MergeSprocs.Miro
 
     public static class TableGroupExtensions
     {
+        public static int AllChildren(this IEnumerable<TableGroup> tableGroups, TableGroup tableGroup)
+        {
+            var tables = new List<Guid>() { tableGroup.Parent };
+
+            var maxDepth = tableGroups.Select(d => d.Depth).OrderByDescending(d => d).First();
+
+            for(var d = tableGroup.Depth; d < maxDepth + 1; d++)
+            {
+                foreach(var table in tableGroups.Where(t => tables.Any(g => g.Equals(t.Parent))))
+                {
+                    tables.AddRange(table.Children);
+                }
+            }
+
+            return tables.Distinct().Count();
+        }
+
         public static bool ChildrenContainsGuid(this IEnumerable<TableGroup> tableGroups, Guid tableGuid)
         {
             var containsTableGuid = false;

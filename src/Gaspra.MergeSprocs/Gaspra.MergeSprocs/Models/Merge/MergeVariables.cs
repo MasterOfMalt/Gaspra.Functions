@@ -1,4 +1,6 @@
-﻿using Gaspra.MergeSprocs.Models.Database;
+﻿using Gaspra.MergeSprocs.Extensions;
+using Gaspra.MergeSprocs.Models.Database;
+using Gaspra.MergeSprocs.Models.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,20 +31,20 @@ namespace Gaspra.MergeSprocs.Models.Merge
             TablesToJoin = tablesToJoin;
         }
 
-        public static IEnumerable<MergeVariables> From(Schema schema)
+        public static IEnumerable<MergeVariables> From(DataStructure dataStructure)
         {
             var mergeVariables = new List<MergeVariables>();
 
-            var dependencyTree = TableTree.Build(schema);
+            //var dependencyTree = TableTree.Build(schema);
 
-            foreach(var table in schema.Tables)
+            foreach(var table in dataStructure.Schema.Tables)
             {
                 mergeVariables.Add(new MergeVariables(
-                    schema.Name,
+                    dataStructure.Schema.Name,
                     table,
-                    table.TableTypeColumns(schema, dependencyTree),
-                    table.MergeIdentifierColumns(schema, dependencyTree),
-                    table.TablesToJoin(schema, dependencyTree)));
+                    table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                    table.MergeIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                    table.TablesToJoin(dataStructure.Schema, dataStructure.DependencyTree)));
             }
 
             return mergeVariables;
@@ -66,7 +68,10 @@ namespace Gaspra.MergeSprocs.Models.Merge
             return $"TT_{variables.Table.Name}";
         }
 
-        public static IEnumerable<Column> TableTypeColumns(this Table table, Schema schema, TableTree dependencyTree)
+        /*
+         * calculate all the columns needed for the table type associated with the merge sproc
+         */
+        public static IEnumerable<Column> TableTypeColumns(this Table table, Schema schema, DependencyTree dependencyTree)
         {
             var tableTypeColumns = table.Columns
                 /*
@@ -79,40 +84,54 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 .Where(c => !c.ForeignKey.ConstrainedTo.Any())
                 .ToList();
 
-            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
+            var tableBranch = dependencyTree
+                .Branches
+                .Where(b => b.TableGuid.Equals(table.CorrelationId))
+                .FirstOrDefault();
 
-            /*
-             * take the value from the table below it
-             */
-            if (table.Columns.Any(c => c.ForeignKey != null))
+            var relatedBranches = dependencyTree
+                .GetRelatedBranches(table);
+
+            if(tableBranch != null)
             {
-                var lowerBranches = dependencyTree.Branches
-                    .Where(b => b.depth > depth);
+                /*
+                 * lower branches
+                 */
+                foreach (var branch in relatedBranches.Where(b => b.Depth > tableBranch.Depth))
+                {
+                    var branchTable = schema.GetTableFrom(branch.TableGuid);
 
-                var lowerRelevantBranches = lowerBranches
-                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
+                    if(branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
+                    {
+                        var identifyingColumns = branchTable.Columns.Where(c => !c.IdentityColumn);
 
-                tableTypeColumns.AddRange(lowerRelevantBranches.SelectMany(t => t.dependencies.CurrentTable.Columns.Where(c => !c.IdentityColumn)));
+                        tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                    }
+                }
+
+                /*
+                 * higher branches
+                 */
+                foreach (var branch in relatedBranches.Where(b => b.Depth < tableBranch.Depth))
+                {
+                    var branchTable = schema.GetTableFrom(branch.TableGuid);
+
+                    if (table.Columns.Where(c => c.ForeignKey.ParentConstraints.Contains(branchTable.Name)).Any())
+                    {
+                        var identifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
+
+                        tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                    }
+                }
             }
 
-            /*
-             * take the id from the table above it
-             */
-            if (table.Columns.Any(c => c.ForeignKey != null))
-            {
-                var higherBranches = dependencyTree.Branches
-                    .Where(b => b.depth < depth);
-
-                var higherRelevantBranches = higherBranches
-                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
-
-                tableTypeColumns.AddRange(higherRelevantBranches.SelectMany(t => t.dependencies.CurrentTable.Columns.Where(c => c.IdentityColumn)));
-            }
-
-            return tableTypeColumns;
+            return tableTypeColumns.Distinct();
         }
 
-        public static IEnumerable<Column> MergeIdentifierColumns(this Table table, Schema schema, TableTree dependencyTree)
+        /*
+         * calculate the columns used to identify whether or not we are merging or updating
+         */
+        public static IEnumerable<Column> MergeIdentifierColumns(this Table table, Schema schema, DependencyTree dependencyTree)
         {
             var identifyingColumns = new List<Column>();
 
@@ -140,54 +159,98 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 identifyingColumns.AddRange(table.Columns.Where(c => !c.IdentityColumn));
             }
 
+
             /*
-             * add child tables as part of the identifying columns
-             *
-             * todo: this could be incorrect
+             * calculate the higher branches identifiers
+             * (relating a detail back to a fact)
              */
-            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
+            var tableBranch = dependencyTree
+            .Branches
+            .Where(b => b.TableGuid.Equals(table.CorrelationId))
+            .FirstOrDefault();
 
-            if(table.Columns.Any(c => c.ForeignKey != null))
+            var relatedBranches = dependencyTree
+                .GetRelatedBranches(table);
+
+            if (tableBranch != null)
             {
-                var higherBranches = dependencyTree.Branches
-                    .Where(b => b.depth < depth);
+                /*
+                 * lower branches
+                 */
+                foreach (var branch in relatedBranches.Where(b => b.Depth < tableBranch.Depth))
+                {
+                    var branchTable = schema.GetTableFrom(branch.TableGuid);
 
-                var higherRelevantBranches = higherBranches
-                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
+                    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
 
-                var includeContraints = table.Columns.Where(c => c.ForeignKey != null && higherRelevantBranches.Any(b => c.ForeignKey.ConstrainedTo.Contains(b.dependencies.CurrentTable.Name)));
+                    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
+                }
 
-                identifyingColumns.AddRange(includeContraints);
+                /*
+                 * higher branches
+                 */
+                foreach (var branch in relatedBranches.Where(b => b.Depth < tableBranch.Depth))
+                {
+                    var branchTable = schema.GetTableFrom(branch.TableGuid);
+
+                    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
+
+                    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
+                }
             }
 
-            return identifyingColumns;
+            return identifyingColumns
+                .Distinct();
         }
 
-        public static IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin(this Table table, Schema schema, TableTree dependencyTree)
+        /*
+         * calculate all the tables we need to join to, and the columns we should join on/ select from
+         */
+        public static IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin(this Table table, Schema schema, DependencyTree dependencyTree)
         {
             var tablesToJoin = new List<(Table, IEnumerable<Column>, IEnumerable<Column>)>();
 
-            var (depth, dependencies) = dependencyTree.Branches.Where(b => b.dependencies.CurrentTable.Name.Equals(table.Name)).FirstOrDefault();
+            /**/
+            var tableBranch = dependencyTree
+                .Branches
+                .Where(b => b.TableGuid.Equals(table.CorrelationId))
+                .FirstOrDefault();
 
-            if (table.Columns.Any(c => c.ForeignKey != null))
+            var relatedBranches = dependencyTree
+                .GetRelatedBranches(table);
+
+            var tablesInJoin = new List<Table>();
+
+            if (tableBranch != null)
             {
-                var lowerBranches = dependencyTree.Branches
-                    .Where(b => b.depth > depth);
-
-                var lowerRelevantBranches = lowerBranches
-                    .Where(b => b.dependencies.CurrentTable.Columns.Any(c => table.Columns.Any(tc => c.Name.Equals(tc.Name))));
-
-
-                var tablesNeededInJoin = lowerRelevantBranches.Select(b => b.dependencies.CurrentTable);
-
-                foreach(var tableForJoin in tablesNeededInJoin)
+                foreach (var branch in relatedBranches.Where(b => b.Depth > tableBranch.Depth))
                 {
-                    /*
-                     * todo:
-                     * need to get teh specific columns required for the data and not every column that isn't an identity column
-                     */
-                    tablesToJoin.Add((tableForJoin, tableForJoin.Columns.Where(c => c.IdentityColumn), tableForJoin.Columns.Where(c => !c.IdentityColumn)));
+                    var branchTable = schema.GetTableFrom(branch.TableGuid);
+
+                    if(branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
+                    {
+                        if (!tablesInJoin.Contains(branchTable))
+                        {
+                            if (!branchTable.Name.EndsWith("Link"))
+                            {
+                                tablesInJoin.Add(branchTable);
+                            }
+                        }
+                    }
                 }
+            }
+
+            foreach(var tableInJoin in tablesInJoin)
+            {
+                /*
+                 * todo:
+                 * need to get teh specific columns required for the data and not every column that isn't an identity column
+                 */
+                tablesToJoin.Add((
+                        tableInJoin,
+                        tableInJoin.Columns.Where(c => c.IdentityColumn),//MergeIdentifierColumns(schema, dependencyTree),
+                        tableInJoin.Columns.Where(c => !c.IdentityColumn)
+                        ));
             }
 
             return tablesToJoin;
