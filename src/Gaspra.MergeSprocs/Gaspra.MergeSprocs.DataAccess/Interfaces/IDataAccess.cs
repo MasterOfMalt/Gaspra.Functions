@@ -6,8 +6,8 @@ namespace Gaspra.MergeSprocs.DataAccess.Interfaces
 {
     public interface IDataAccess
     {
-        public Task<IEnumerable<ColumnInformation>> GetColumnInformation();
-        public Task<IEnumerable<FKConstraintInformation>> GetFKConstraintInformation();
-        public Task<IEnumerable<ExtendedPropertyInformation>> GetExtendedProperties();
+        public Task<IEnumerable<ColumnInformation>> GetColumnInformation(string connectionString);
+        public Task<IEnumerable<FKConstraintInformation>> GetFKConstraintInformation(string connectionString);
+        public Task<IEnumerable<ExtendedPropertyInformation>> GetExtendedProperties(string connectionString);
     }
 }

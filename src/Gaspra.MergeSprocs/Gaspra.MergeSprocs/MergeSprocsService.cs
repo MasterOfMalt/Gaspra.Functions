@@ -1,4 +1,5 @@
-﻿using Gaspra.MergeSprocs.DataAccess.Interfaces;
+﻿using ConsoleAppFramework;
+using Gaspra.MergeSprocs.DataAccess.Interfaces;
 using Gaspra.MergeSprocs.Extensions;
 using Gaspra.MergeSprocs.Miro;
 using Gaspra.MergeSprocs.Models;
@@ -6,19 +7,16 @@ using Gaspra.MergeSprocs.Models.Database;
 using Gaspra.MergeSprocs.Models.Merge;
 using Gaspra.MergeSprocs.Models.Tree;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gaspra.MergeSprocs
 {
-    public class MergeSprocsService : BackgroundService
+    public class MergeSprocsService : ConsoleAppBase
     {
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
@@ -34,101 +32,116 @@ namespace Gaspra.MergeSprocs
             this.logger = logger;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        public async Task Run(
+                [Option("c", "database connection string")] string connectionString,
+                [Option("s", "schema name")] string schemaName,
+                [Option("o", "output path")] string outputPath = @"*\.output",
+                [Option("ij", "include the json files (default false)")] bool includeJson = false
+            )
         {
-            cancellationToken.Register(() =>
-            {
-                logger.LogInformation($"{nameof(MergeSprocsService)} cancellation token called");
-            });
+            Schema databaseSchema = null;
 
             /*
              * build up database objects
              */
-            var columnInfo = (await dataAccess.GetColumnInformation()).ToList();
+            try
+            {
+                var columnInfo = (await dataAccess.GetColumnInformation(connectionString)).ToList();
 
-            var fkInfo = (await dataAccess.GetFKConstraintInformation()).ToList();
+                var fkInfo = (await dataAccess.GetFKConstraintInformation(connectionString)).ToList();
 
-            var extendedProps = (await dataAccess.GetExtendedProperties()).ToList();
+                var extendedProps = (await dataAccess.GetExtendedProperties(connectionString)).ToList();
 
-            var database = Schema
-                .From(columnInfo, extendedProps, fkInfo);
+                databaseSchema = Schema
+                    .From(columnInfo, extendedProps, fkInfo)
+                    .Where(s => s.Name.Equals(schemaName))
+                    .FirstOrDefault();
 
-            database
-                .First()
-                .CalculateDependencies();
+                databaseSchema
+                    .CalculateDependencies();
 
-            /*
-             * save them out to json
-             */
-            WriteFile(
-                "analytics.database.json",
-                JsonConvert.SerializeObject(
-                    database,
-                    Formatting.Indented,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    }));
+                logger.LogInformation("Read schema information for [{schemaName}] with [{tableCount}] tables",
+                    schemaName,
+                    databaseSchema.Tables.Count());
 
-            logger.LogInformation("output: analytics.database.json");
+                if(includeJson)
+                {
+                    WriteFile(
+                        "analytics.database.json",
+                        JsonConvert.SerializeObject(
+                            databaseSchema,
+                            Formatting.Indented,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            }),
+                        outputPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    "Unable to calculate schema: [{schemaName}] due to: {ex}",
+                    schemaName,
+                    ex.Message);
+            }
 
             /*
              * calculate dependency tree and build data structure
              */
             var dependencyTree = DependencyTree
-                .Calculate(database.First());
+                .Calculate(databaseSchema);
 
-            var dataStructure = new DataStructure(database.First(), dependencyTree);
+            var dataStructure = new DataStructure(databaseSchema, dependencyTree);
 
-            logger.LogInformation("calculated data structure");
+            if (includeJson)
+            {
+                WriteFile(
+                    "analytics.datastructure.json",
+                    JsonConvert.SerializeObject(
+                        dataStructure,
+                        Formatting.Indented,
+                        new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        }),
+                    outputPath);
+            }
 
-            /*
-             * save data structure out to json
-             */
-            WriteFile(
-                "analytics.datastructure.json",
-                JsonConvert.SerializeObject(
-                    dataStructure,
-                    Formatting.Indented,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    }));
-
-            logger.LogInformation("output: analytics.datastructure.json");
+            logger.LogInformation("Calculated dependency tree with [{branchCount}] branches",
+                dependencyTree.Branches.Count());
 
             /*
              * build up merge variables
              */
             var mergeVariables = MergeVariables.From(dataStructure);
 
-            logger.LogInformation("calculated merge variables");
+            if (includeJson)
+            {
+                WriteFile(
+                    "analytics.database.mergevariables.json",
+                    JsonConvert.SerializeObject(
+                        mergeVariables,
+                        Formatting.Indented,
+                        new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        }),
+                    outputPath);
+            }
 
-            WriteFile(
-                "analytics.database.mergevariables.json",
-                JsonConvert.SerializeObject(
-                    mergeVariables,
-                    Formatting.Indented,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    }));
-
-            logger.LogInformation("output: analytics.database.mergevariables.json");
+            logger.LogInformation("Calculated merge variables");
 
             /*
              * Create merge statements
              */
-
-            foreach(var mergeVariable in mergeVariables)
+            foreach (var mergeVariable in mergeVariables)
             {
                 var mergeStatement = mergeVariable.BuildMergeSproc();
 
                 var fileName = $"{mergeVariable.SchemaName}.{mergeVariable.ProcedureName()}.sql";
 
-                WriteFile(fileName, mergeStatement);
-
-                logger.LogInformation("output: {filename}", fileName);
+                WriteFile(fileName, mergeStatement, outputPath);
             }
 
             /*
@@ -141,22 +154,20 @@ namespace Gaspra.MergeSprocs
 
                 logger.LogInformation("drawn miro objects");
             }
-
-            logger.LogInformation("Done!");
-
-            return;
         }
 
-        private void WriteFile(string fileName, string fileContents)
+        private void WriteFile(string fileName, string fileContents, string output)
         {
-            var outputDirectory = $"{Directory.GetCurrentDirectory()}/.output/";
+            var outputDirectory = output.Replace("*", $"{Directory.GetCurrentDirectory()}");
 
             if (!Directory.Exists(outputDirectory))
             {
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            File.WriteAllText($"{outputDirectory}/{fileName}", fileContents);
+            File.WriteAllText($"{outputDirectory}\\{fileName}", fileContents);
+
+            logger.LogInformation($"Saved: {outputDirectory}\\{fileName}");
         }
     }
 }

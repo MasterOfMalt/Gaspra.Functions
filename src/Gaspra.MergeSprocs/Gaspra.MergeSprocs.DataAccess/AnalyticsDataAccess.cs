@@ -1,31 +1,18 @@
-﻿using Gaspra.Connection;
-using Gaspra.MergeSprocs.DataAccess.Extensions;
+﻿using Gaspra.MergeSprocs.DataAccess.Extensions;
 using Gaspra.MergeSprocs.DataAccess.Interfaces;
 using Gaspra.MergeSprocs.DataAccess.Models;
-using Gaspra.Signing.Interfaces;
-using Microsoft.Extensions.Configuration;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Gaspra.MergeSprocs.DataAccess
 {
     public class AnalyticsDataAccess : IDataAccess
     {
-        private readonly ConnectionDetails connectionDetails;
-
-        public AnalyticsDataAccess(IConfiguration configuration)
+        public async Task<IEnumerable<ColumnInformation>> GetColumnInformation(string connectionString)
         {
-            connectionDetails = ConnectionDetailsExtensions
-                .ToConnectionDetails(configuration.GetSection("ConnectionDetails"));
-        }
-
-        public async Task<IEnumerable<ColumnInformation>> GetColumnInformation()
-        {
-            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+            using var connection = new SqlConnection(connectionString);
 
             var command = new SqlCommand(StoredProcedures.GetColumnInformation(), connection)
             {
@@ -41,9 +28,9 @@ namespace Gaspra.MergeSprocs.DataAccess
             return columnInformationModels;
         }
 
-        public async Task<IEnumerable<FKConstraintInformation>> GetFKConstraintInformation()
+        public async Task<IEnumerable<FKConstraintInformation>> GetFKConstraintInformation(string connectionString)
         {
-            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+            using var connection = new SqlConnection(connectionString);
 
             var command = new SqlCommand(StoredProcedures.GetFKConstraintInformation(), connection)
             {
@@ -59,9 +46,9 @@ namespace Gaspra.MergeSprocs.DataAccess
             return fkConstraintModels;
         }
 
-        public async Task<IEnumerable<ExtendedPropertyInformation>> GetExtendedProperties()
+        public async Task<IEnumerable<ExtendedPropertyInformation>> GetExtendedProperties(string connectionString)
         {
-            using var connection = new SqlConnection(connectionDetails.ToConnectionString());
+            using var connection = new SqlConnection(connectionString);
 
             var command = new SqlCommand(StoredProcedures.GetExtendedProperties(), connection)
             {
