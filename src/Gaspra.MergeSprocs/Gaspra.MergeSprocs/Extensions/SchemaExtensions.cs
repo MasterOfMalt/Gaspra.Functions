@@ -22,9 +22,6 @@ namespace Gaspra.MergeSprocs.Extensions
                     .Where(t => foreignKeys
                         .SelectMany(f => f.ConstrainedTo)
                         .Contains(t.Name))
-
-                    //.Where(t => !t.Name.EndsWith("link"))
-
                     .Select(t => t.CorrelationId)
                     .ToList();
 
@@ -36,7 +33,8 @@ namespace Gaspra.MergeSprocs.Extensions
         {
             var tables = schema
                 .Tables
-                .Where(t => guids.Contains(t.CorrelationId));
+                .Where(t => guids
+                    .Contains(t.CorrelationId));
 
             return tables;
         }
@@ -45,7 +43,8 @@ namespace Gaspra.MergeSprocs.Extensions
         {
             var tables = schema
                 .Tables
-                .Where(t => guid.Equals(t.CorrelationId));
+                .Where(t => guid
+                    .Equals(t.CorrelationId));
 
             return tables
                 .FirstOrDefault();

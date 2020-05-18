@@ -6,22 +6,11 @@
 
       <PackAsTool>true</PackAsTool>
       <ToolCommandName>Gaspra.MergeSprocs</ToolCommandName>
-      <PackageOutputPath>./nupkg</PackageOutputPath>
+      <PackageOutputPath>..\..\..\.nupkg</PackageOutputPath>
+      <Version>1.0.1</Version>
 
 
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="appsettings.dev.json" />
-    <None Remove="appsettings.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="appsettings.dev.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Refit" Version="5.1.67" />
   </ItemGroup>

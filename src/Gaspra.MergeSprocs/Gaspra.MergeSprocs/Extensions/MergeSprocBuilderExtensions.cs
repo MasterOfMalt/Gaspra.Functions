@@ -36,13 +36,6 @@ namespace Gaspra.MergeSprocs.Extensions
             return sproc;
         }
 
-
-
-
-
-
-
-
         public static class General
         {
             public static string Head()
@@ -74,15 +67,6 @@ GO
                 return dataType;
             }
         }
-
-
-
-
-
-
-
-
-
 
         public static class TableType
         {
@@ -117,10 +101,6 @@ GO
 
 
         }
-
-
-
-
 
         public static class MergeSproc
         {
@@ -163,12 +143,7 @@ INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select
             }
 
             private static string GetInsertInto(Column column)
-            {//todo
-                //if(column.Name.Equals("OrderFactId"))
-                //{
-                //    return $"orderfact.OrderFactId";
-                //}
-
+            {
                 return column.Name;
             }
 

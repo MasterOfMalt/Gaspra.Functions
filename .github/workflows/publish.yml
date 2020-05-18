@@ -1,0 +1,5 @@
+- name: Publish NuGet
+  uses: brandedoutcast/publish-nuget@v2.5.0
+  with: 
+    PROJECT_FILE_PATH: src/Gaspra.MergeSprocs/Gaspra.MergeSprocs.csproj
+    NUGET_KEY: ${{secrets.NUGET_API_KEY}}
