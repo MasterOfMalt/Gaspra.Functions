@@ -1,7 +1,6 @@
 ﻿using ConsoleAppFramework;
 using Gaspra.MergeSprocs.DataAccess.Interfaces;
 using Gaspra.MergeSprocs.Extensions;
-using Gaspra.MergeSprocs.Miro;
 using Gaspra.MergeSprocs.Models;
 using Gaspra.MergeSprocs.Models.Database;
 using Gaspra.MergeSprocs.Models.Merge;
@@ -20,15 +19,12 @@ namespace Gaspra.MergeSprocs
     {
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
-        private readonly IConfiguration configuration;
 
         public MergeSprocsService(
             IDataAccess dataAccess,
-            IConfiguration configuration,
             ILogger<MergeSprocsService> logger)
         {
             this.dataAccess = dataAccess;
-            this.configuration = configuration;
             this.logger = logger;
         }
 
@@ -143,17 +139,6 @@ namespace Gaspra.MergeSprocs
 
                 WriteFile(fileName, mergeStatement, outputPath);
             }
-
-            /*
-             * Draw to miro
-             */
-            if (bool.Parse(configuration.GetSection("miro")["draw"]))
-            {
-                var drawDataStructure = new DrawDataStructure();
-                await drawDataStructure.DrawToMiro(dataStructure);
-
-                logger.LogInformation("drawn miro objects");
-            }
         }
 
         private void WriteFile(string fileName, string fileContents, string output)
@@ -165,9 +150,9 @@ namespace Gaspra.MergeSprocs
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            File.WriteAllText($"{outputDirectory}\\{fileName}", fileContents);
+            File.WriteAllText($@"{outputDirectory}\{fileName}", fileContents);
 
-            logger.LogInformation($"Saved: {outputDirectory}\\{fileName}");
+            logger.LogInformation($@"Saved: {outputDirectory}\{fileName}");
         }
     }
 }

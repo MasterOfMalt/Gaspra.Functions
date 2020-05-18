@@ -20,11 +20,6 @@ namespace Gaspra.MergeSprocs
 
         public static IHostBuilder CreateHostBuilder(string[] args) => Host
             .CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((host, config) =>
-            {
-                config
-                    .AddJsonFile("appsettings.json");
-            })
             .ConfigureLogging((host, logger) =>
             {
                 logger
