@@ -9,17 +9,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run paket
-        run: .\build.ps1
-        shell: powershell
+      - name: Setup dotnet core 3.1.200
+         uses: actions/setup-dotnet@v1
+         with:
+           dotnet-version: 3.1.200
 
-      # - name: Setup dotnet
-      #   uses: actions/setup-dotnet@v1
-      #   with:
-      #     dotnet-version: 3.1.200
+      - name: Run & restore paket
+        run: .\build.ps1
+        shell: powershell      
 
       # Publish
-      - name: publish on version change
+      - name: Publish on version change
         id: publish_nuget
         uses: rohith/publish-nuget@v2
         with:
