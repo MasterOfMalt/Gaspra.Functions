@@ -136,7 +136,7 @@ SELECT
 {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"{GetInsertInto(c)}"))}
 FROM
     @{tableTypeVariable} AS tt
-INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select(t => $"[{schemaName}].[{t.joinTable.Name}] AS {t.joinTable.Name.ToLower()} ON tt.{t.joinColumns.First().Name}={t.joinTable.Name.ToLower()}.{t.joinColumns.First().Name}"))}
+INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select(t => $"[{schemaName}].[{t.joinTable.Name}] AS {t.joinTable.Name.ToLower()} ON tt.{t.selectColumns.First().Name}={t.joinTable.Name.ToLower()}.{t.selectColumns.First().Name}"))}
 
 ";
                 return tableVariable;

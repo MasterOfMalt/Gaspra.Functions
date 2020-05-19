@@ -125,7 +125,12 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 }
             }
 
-            return tableTypeColumns.Distinct();
+            return tableTypeColumns
+                .Distinct()
+                /*
+                 * order the table type columns to ensure they always come out the same
+                 */
+                .OrderBy(c => c.Name);
         }
 
         /*
