@@ -150,9 +150,16 @@ namespace Gaspra.MergeSprocs
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            File.WriteAllText($@"{outputDirectory}\{fileName}", fileContents);
+            if (fileContents.Length == 0)
+            {
+                logger.LogError("Zero length file: {0}",fileName);
+            }
+            else
+            {
+                File.WriteAllText($@"{outputDirectory}\{fileName}", fileContents);
 
-            logger.LogInformation($@"Saved: {outputDirectory}\{fileName}");
+                logger.LogInformation($@"Saved: {outputDirectory}\{fileName}");
+            }
         }
     }
 }
