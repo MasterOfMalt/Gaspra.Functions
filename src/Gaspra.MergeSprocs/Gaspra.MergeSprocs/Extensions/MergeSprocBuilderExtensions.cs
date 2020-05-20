@@ -133,10 +133,10 @@ $@"DECLARE @{sprocName}Variable TABLE
 
 INSERT INTO @{sprocName}Variable
 SELECT
-{string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"{GetInsertInto(c)}"))}
+{string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"[{GetInsertInto(c)}]"))}
 FROM
     @{tableTypeVariable} AS tt
-INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select(t => $"[{schemaName}].[{t.joinTable.Name}] AS {t.joinTable.Name.ToLower()} ON tt.{t.selectColumns.First().Name}={t.joinTable.Name.ToLower()}.{t.selectColumns.First().Name}"))}
+INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select(t => $"[{schemaName}].[{t.joinTable.Name}] AS alias_{t.joinTable.Name.ToLower()} ON tt.[{t.selectColumns.First().Name}]=alias_{t.joinTable.Name.ToLower()}.[{t.selectColumns.First().Name}]"))}
 
 ";
                 return tableVariable;
@@ -152,14 +152,14 @@ INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select
                 var sproc =
 $@"MERGE [{schemaName}].[{databaseTable.Name}] AS t
 USING @{tableTypeVariable} AS s
-    ON (t.{matchOn} = s.{matchOn})
+    ON (t.[{matchOn}] = s.[{matchOn}])
 
 WHEN NOT MATCHED
     THEN INSERT (
-        {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name))}
+        {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"[{c.Name}]"))}
     )
     VALUES (
-        {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"s.{c.Name}"))}
+        {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"s.[{c.Name}]"))}
     );
 ";
                 return sproc;

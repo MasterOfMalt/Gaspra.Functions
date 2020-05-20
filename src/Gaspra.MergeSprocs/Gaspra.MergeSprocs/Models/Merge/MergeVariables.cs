@@ -4,8 +4,6 @@ using Gaspra.MergeSprocs.Models.Tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
 
 namespace Gaspra.MergeSprocs.Models.Merge
 {
@@ -31,26 +29,39 @@ namespace Gaspra.MergeSprocs.Models.Merge
             TablesToJoin = tablesToJoin;
         }
 
-        public static IEnumerable<MergeVariables> From(DataStructure dataStructure)
+        public static (IEnumerable<MergeVariables> mergeVariables, IEnumerable<Exception> errornousTables) From(DataStructure dataStructure)
         {
             var mergeVariables = new List<MergeVariables>();
 
-            //var dependencyTree = TableTree.Build(schema);
+            var errornousTables = new List<Exception>();
 
             foreach(var table in dataStructure.Schema.Tables)
             {
-                mergeVariables.Add(new MergeVariables(
-                    dataStructure.Schema.Name,
-                    table,
-                    table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
-                    table.MergeIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
-                    table.TablesToJoin(dataStructure.Schema, dataStructure.DependencyTree)));
+                try
+                {
+                    mergeVariables.Add(new MergeVariables(
+                        dataStructure.Schema.Name,
+                        table,
+                        table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                        table.MergeIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                        table.TablesToJoin(dataStructure.Schema, dataStructure.DependencyTree)));
+
+                }
+                catch (Exception ex)
+                {
+                    errornousTables.Add(ex);
+                }
             }
 
-            return mergeVariables;
+            return (mergeVariables, errornousTables);
         }
     }
 
+    /*
+     * todo:
+     * move these out of there, the tabletype/ mergeidentifier/ tablestojoin
+     * should also be table extensions
+     */
     public static class MergeVariablesExtensions
     {
         public static string ProcedureName(this MergeVariables variables)
@@ -81,7 +92,7 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 /*
                  * get all columns which aren't foreign key columns
                  */
-                .Where(c => !c.ForeignKey.ConstrainedTo.Any())
+                .Where(c => c.ForeignKey == null || !c.ForeignKey.ConstrainedTo.Any())
                 .ToList();
 
             var tableBranch = dependencyTree
@@ -92,7 +103,7 @@ namespace Gaspra.MergeSprocs.Models.Merge
             var relatedBranches = dependencyTree
                 .GetRelatedBranches(table);
 
-            if(tableBranch != null)
+            if (tableBranch != null)
             {
                 /*
                  * lower branches
@@ -101,7 +112,7 @@ namespace Gaspra.MergeSprocs.Models.Merge
                 {
                     var branchTable = schema.GetTableFrom(branch.TableGuid);
 
-                    if(branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
+                    if (branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
                     {
                         var identifyingColumns = branchTable.Columns.Where(c => !c.IdentityColumn);
 
@@ -123,6 +134,11 @@ namespace Gaspra.MergeSprocs.Models.Merge
                         tableTypeColumns.AddRange(identifyingColumns.Distinct());
                     }
                 }
+            }
+
+            if (!tableTypeColumns.Distinct().Any())
+            {
+                throw new Exception($"Couldn't calculate table type columns for [{table.Name}], unable to calculate merge variables");
             }
 
             return tableTypeColumns
@@ -202,6 +218,11 @@ namespace Gaspra.MergeSprocs.Models.Merge
 
                     identifyingColumns.AddRange(higherBranchIdentifyingColumns);
                 }
+            }
+
+            if(!identifyingColumns.Distinct().Any())
+            {
+                throw new Exception($"Couldn't calculate identifying columns for [{table.Name}], unable to calculate merge variables");
             }
 
             return identifyingColumns
