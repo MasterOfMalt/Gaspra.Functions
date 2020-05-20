@@ -5,7 +5,6 @@ using Gaspra.MergeSprocs.Models;
 using Gaspra.MergeSprocs.Models.Database;
 using Gaspra.MergeSprocs.Models.Merge;
 using Gaspra.MergeSprocs.Models.Tree;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -110,7 +109,14 @@ namespace Gaspra.MergeSprocs
             /*
              * build up merge variables
              */
-            var mergeVariables = MergeVariables.From(dataStructure);
+            var (mergeVariables, errornousTables) = MergeVariables.From(dataStructure);
+
+            if(errornousTables.Any())
+            {
+                logger.LogError("Tables that won't generate merge sprocs: [{tables}], due to exceptions: [{exceptions}]",
+                    dataStructure.Schema.Tables.Select(t => t.Name).Except(mergeVariables.Select(m => m.Table.Name)),
+                    errornousTables);
+            }
 
             if (includeJson)
             {
