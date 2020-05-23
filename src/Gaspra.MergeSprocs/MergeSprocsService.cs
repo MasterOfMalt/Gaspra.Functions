@@ -27,9 +27,9 @@ namespace Gaspra.MergeSprocs
             this.logger = logger;
         }
 
-        public async Task Run(
-                [Option("c", "database connection string")] string connectionString,
-                [Option("s", "schema name")] string schemaName,
+        public async Task Run( //don't get the connectionstring/ schemaname in
+                [Option("c", "database connection string")] string connectionString = "Server=mom-non-sql1.azure.mistressofmalt.com;Database=ATOM_ReportingStatsEnv-dev;User Id=mom_richard_lawrence;Password=#Phoenix9062",
+                [Option("s", "schema name")] string schemaName = "Analytics",
                 [Option("o", "output path")] string outputPath = @"*\.output",
                 [Option("ij", "include the json files (default false)")] bool includeJson = false
             )

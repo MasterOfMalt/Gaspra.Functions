@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
 
       <PackAsTool>true</PackAsTool>
       <ToolCommandName>Gaspra.MergeSprocs</ToolCommandName>
       <PackageOutputPath>..\..\..\.nupkg</PackageOutputPath>
       <Version>1.0.4</Version>
+      <ApplicationIcon />
+      <StartupObject />
 
   </PropertyGroup>
   <ItemGroup>

@@ -160,7 +160,12 @@ WHEN NOT MATCHED
     )
     VALUES (
         {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"s.[{c.Name}]"))}
-    );
+    )
+
+WHEN MATCHED
+    THEN UPDATE SET
+        {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"t.[{c.Name}]=s.[{c.Name}]"))}
+    ;
 ";
                 return sproc;
             }
