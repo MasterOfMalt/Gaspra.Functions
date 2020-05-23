@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.MergeSprocs", "Gaspr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.MergeSprocs.DataAccess", "Gaspra.MergeSprocs.DataAccess\Gaspra.MergeSprocs.DataAccess.csproj", "{98EC5660-1E9F-4722-908C-0D68952DDC0D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaspra.Pseudo", "Gaspra.Pseudo\Gaspra.Pseudo.csproj", "{00600A06-BD61-42E3-8FB7-41829D749F05}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{98EC5660-1E9F-4722-908C-0D68952DDC0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98EC5660-1E9F-4722-908C-0D68952DDC0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98EC5660-1E9F-4722-908C-0D68952DDC0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00600A06-BD61-42E3-8FB7-41829D749F05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00600A06-BD61-42E3-8FB7-41829D749F05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00600A06-BD61-42E3-8FB7-41829D749F05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00600A06-BD61-42E3-8FB7-41829D749F05}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

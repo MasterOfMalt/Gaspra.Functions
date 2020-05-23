@@ -1,12 +1,34 @@
-﻿using System;
+﻿using ConsoleAppFramework;
+using Gaspra.Logging.Builder;
+using Gaspra.Pseudo.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace Gaspra.Functions
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            await CreateHostBuilder(args)
+                .RunConsoleAppFrameworkAsync(args);
         }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) => Host
+            .CreateDefaultBuilder(args)
+            .ConfigureLogging((host, logger) =>
+            {
+                logger
+                    .SetMinimumLevel(LogLevel.Debug)
+                    .ClearProviders()
+                    .AddProviderConsole();
+            })
+            .ConfigureServices((host, services) =>
+            {
+                services
+                    .SetupPseudo();
+            });
     }
 }

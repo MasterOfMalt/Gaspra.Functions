@@ -3,14 +3,12 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-
-      <PackAsTool>true</PackAsTool>
-      <ToolCommandName>Gaspra.MergeSprocs</ToolCommandName>
-      <PackageOutputPath>..\..\..\.nupkg</PackageOutputPath>
-      <Version>1.0.4</Version>
-      <ApplicationIcon />
-      <StartupObject />
-
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>Gaspra.MergeSprocs</ToolCommandName>
+    <PackageOutputPath>..\..\..\.nupkg</PackageOutputPath>
+    <Version>1.0.4</Version>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Refit" Version="5.1.67" />
@@ -18,5 +16,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Gaspra.MergeSprocs.DataAccess\Gaspra.MergeSprocs.DataAccess.csproj" />
   </ItemGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
