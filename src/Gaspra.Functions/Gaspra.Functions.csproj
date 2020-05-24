@@ -4,8 +4,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\Gaspra.Pseudo\Gaspra.Pseudo.csproj" />
+    <ProjectReference Include="..\Gaspra.Functions.Correlation\Gaspra.Functions.Correlation.csproj" />
+    <ProjectReference Include="..\libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj" />
+    <ProjectReference Include="..\libraries\Gaspra.Pseudo\Gaspra.Pseudo.csproj" />
   </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

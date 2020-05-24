@@ -1,9 +1,11 @@
 ﻿using ConsoleAppFramework;
+using Gaspra.DatabaseUtility.Extensions;
+using Gaspra.Functions.Correlation.Extensions;
+using Gaspra.Functions.Interceptors;
 using Gaspra.Logging.Builder;
 using Gaspra.Pseudo.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace Gaspra.Functions
@@ -13,7 +15,11 @@ namespace Gaspra.Functions
         public static async Task Main(string[] args)
         {
             await CreateHostBuilder(args)
-                .RunConsoleAppFrameworkAsync(args);
+                .RunConsoleAppFrameworkAsync(
+                    args,
+                    new CompositeConsoleAppInterceptor(new [] {
+                        new FunctionInterceptor()
+                    }));
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) => Host
@@ -23,12 +29,15 @@ namespace Gaspra.Functions
                 logger
                     .SetMinimumLevel(LogLevel.Debug)
                     .ClearProviders()
-                    .AddProviderConsole();
+                    .AddProviderConsole()
+                    .AddFilter("Microsoft", LogLevel.Warning);
             })
             .ConfigureServices((host, services) =>
             {
                 services
-                    .SetupPseudo();
+                    .SetupCorrelationContext()
+                    .SetupPseudo()
+                    .SetupDatabaseUtility();
             });
     }
 }

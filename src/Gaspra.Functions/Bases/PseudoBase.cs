@@ -1,8 +1,6 @@
 ﻿using ConsoleAppFramework;
 using Gaspra.Pseudo;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace Gaspra.Functions.Bases
 {
@@ -15,12 +13,12 @@ namespace Gaspra.Functions.Bases
             this.write = write;
         }
 
-        [Command("Pseudo")]
-        public void Run(
+        [Command("pseudo")]
+        public async Task Run(
             [Option("w", "write to pseduo")]string pseudoWrite
             )
         {
-            write.Output(pseudoWrite);
+            await write.Output(pseudoWrite);
         }
     }
 }
