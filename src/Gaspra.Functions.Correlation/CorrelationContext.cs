@@ -8,7 +8,6 @@ namespace Gaspra.Functions.Correlation
     {
         public Guid CorrelationId { get; }
         public DateTimeOffset Timestamp { get; }
-
         public string Function { get; set; }
         public string[] args { get; set; }
 

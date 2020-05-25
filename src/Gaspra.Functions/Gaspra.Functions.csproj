@@ -7,7 +7,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Gaspra.Functions.Correlation\Gaspra.Functions.Correlation.csproj" />
     <ProjectReference Include="..\libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj" />
-    <ProjectReference Include="..\libraries\Gaspra.Pseudo\Gaspra.Pseudo.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -1,4 +1,5 @@
-﻿using Gaspra.Functions.Interfaces;
+﻿using Gaspra.DatabaseUtility.Extensions;
+using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
@@ -25,6 +26,9 @@ namespace Gaspra.Functions.Extensions
                         function,
                         ServiceLifetime.Singleton));
             }
+
+            collection
+                .SetupDatabaseUtility();
 
             return collection;
         }
