@@ -8,4 +8,3 @@ nuget Gaspra.Logging.Builder
 nuget Gaspra.Signing
 nuget Microsoft.Extensions.Hosting
 nuget System.Data.Sqlclient
-nuget ConsoleAppFramework

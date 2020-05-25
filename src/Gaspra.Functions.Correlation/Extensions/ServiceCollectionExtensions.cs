@@ -5,10 +5,13 @@ namespace Gaspra.Functions.Correlation.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection SetupCorrelationContext(this IServiceCollection serviceCollection)
+        public static IServiceCollection SetupCorrelationContext(this IServiceCollection serviceCollection, string[] args)
         {
             serviceCollection
-                .AddSingleton<ICorrelationContext, CorrelationContext>();
+                .AddSingleton<ICorrelationContext>((service) =>
+                {
+                    return new CorrelationContext(args);
+                });
 
             return serviceCollection;
         }
