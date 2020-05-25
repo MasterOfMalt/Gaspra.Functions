@@ -2,6 +2,8 @@
 using Gaspra.Functions.Correlation.Interfaces;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gaspra.Functions.Bases
@@ -22,7 +24,16 @@ namespace Gaspra.Functions.Bases
             this.jsonDatabaseService = jsonDatabaseService;
         }
 
-        public async Task Run()
+        public IEnumerable<string> FunctionAliases => new[] { nameof(JsonDatabase) };
+
+        public string FunctionHelp => "json db.";
+
+        public bool ValidateParameters()
+        {
+            return false;
+        }
+
+        public async Task Run(CancellationToken cancellationToken)
         {
             //use cxt to get parameters
 

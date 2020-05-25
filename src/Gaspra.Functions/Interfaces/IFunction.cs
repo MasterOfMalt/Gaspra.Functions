@@ -1,34 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gaspra.Functions.Interfaces
 {
     public interface IFunction
     {
-        Task Run();
-    }
-
-    public class TestOne : IFunction
-    {
-        public async Task Run()
-        {
-            await Task.Run(() =>
-            {
-                Console.WriteLine("test one");
-            });
-        }
-    }
-
-    public class TestTwo : IFunction
-    {
-        public async Task Run()
-        {
-            await Task.Run(() =>
-            {
-                Console.WriteLine("test two");
-            });
-        }
+        IEnumerable<string> FunctionAliases { get; }
+        string FunctionHelp { get; }
+        bool ValidateParameters();
+        Task Run(CancellationToken cancellationToken);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Gaspra.DatabaseUtility.Extensions;
+using Gaspra.Functions.Functions;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -28,7 +29,8 @@ namespace Gaspra.Functions.Extensions
             }
 
             collection
-                .SetupDatabaseUtility();
+                .SetupDatabaseUtility()
+                .AddSingleton<IHelper, Helper>();
 
             return collection;
         }

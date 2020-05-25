@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +16,7 @@ namespace Gaspra.Functions
         private readonly IHostApplicationLifetime hostApplicationLifetime;
         private readonly IEnumerable<IFunction> functions;
         private readonly ICorrelationContext cxt;
+        private readonly IEnumerable<string> HelpParameters = new[] { "h", "help" };
 
         public GaspraFunctions(
             ILogger<GaspraFunctions> logger,
@@ -33,22 +33,48 @@ namespace Gaspra.Functions
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             var function = functions
-                .Where(f => f.GetType().Name.Equals(cxt.Function))
+                .Where(f => f.FunctionAliases.Any(f => f.Equals(cxt.FunctionName, StringComparison.InvariantCultureIgnoreCase)))
                 .FirstOrDefault();
 
             if (function == null)
             {
-                logger.LogError("Function [{requestedFunction}] was not found, please choose from: [{availableFunctions}]",
-                    cxt.Function,
-                    functions.Select(f => f.GetType().Name));
+                logger.LogError("Function [{requestedFunction}] was not found, please choose from: {availableFunctions}",
+                    cxt.FunctionName,
+                    functions.Select(f => $"[{string.Join(", ", f.FunctionAliases)}]")
+                    );
             }
             else
             {
-                logger.LogInformation("Executing [{requestedFunction}]",
-                    cxt.Function);
+                if (cxt
+                    .FunctionParameters
+                    .Any(p => HelpParameters
+                        .Any(h => h.Equals(p.Key, StringComparison.InvariantCultureIgnoreCase))))
+                {
+                    logger.LogInformation(function.FunctionHelp);
+                }
+                else
+                {
+                    if (function.ValidateParameters())
+                    {
+                        logger.LogInformation("Executing [{requestedFunction}] (ctrl+c to exit)",
+                            cxt.FunctionName);
 
-                await function.Run();
+                        Console.CancelKeyPress += (sender, e) =>
+                        {
+                            cxt.FunctionCancellationSource
+                                .Cancel();
+                        };
+
+                        await function.Run(cxt.FunctionCancellationSource.Token);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Function [{requestedFunction}] parameters are invalid so it will not run.",
+                            cxt.FunctionName);
+                    }
+                }
             }
+
 
             hostApplicationLifetime
                 .StopApplication();
@@ -57,8 +83,8 @@ namespace Gaspra.Functions
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Finished [{requestedFunction}] in [{executionTime}]",
-                cxt.Function,
-                DateTimeOffset.UtcNow - cxt.Timestamp);
+                cxt.FunctionName,
+                DateTimeOffset.UtcNow - cxt.FunctionTimestamp);
         }
     }
 }

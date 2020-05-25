@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace Gaspra.Functions.Correlation.Interfaces
 {
     public interface ICorrelationContext
     {
-        Guid CorrelationId { get; }
-        DateTimeOffset Timestamp { get; }
-
-        string Function { get; set; }
+        Guid FunctionCorrelationId { get; }
+        DateTimeOffset FunctionTimestamp { get; }
+        CancellationTokenSource FunctionCancellationSource { get; }
+        string FunctionName { get; }
+        IEnumerable<FunctionParameter> FunctionParameters { get; set; }
     }
 }
