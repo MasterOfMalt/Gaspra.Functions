@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Gaspra.Functions.Correlation;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +9,7 @@ namespace Gaspra.Functions.Interfaces
     {
         IEnumerable<string> FunctionAliases { get; }
         string FunctionHelp { get; }
-        bool ValidateParameters();
-        Task Run(CancellationToken cancellationToken);
+        bool ValidateParameters(IEnumerable<IFunctionParameter> parameters);
+        Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters);
     }
 }

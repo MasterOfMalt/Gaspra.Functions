@@ -1,4 +1,5 @@
-﻿using Gaspra.Functions.Interfaces;
+﻿using Gaspra.Functions.Correlation;
+using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -9,9 +10,6 @@ using System.Threading.Tasks;
 
 namespace Gaspra.Functions.Functions
 {
-    /*
-     * IHelper solves circular dependencies
-     */
     public interface IHelper
     {
         IEnumerable<string> BuildHelpMessage();
@@ -69,9 +67,9 @@ namespace Gaspra.Functions.Functions
 
         public string FunctionHelp => string.Join($"{Environment.NewLine}", helper.BuildHelpMessage());
 
-        public bool ValidateParameters() => true;
+        public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters) => true;
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
             await Task.Run(() =>
             {

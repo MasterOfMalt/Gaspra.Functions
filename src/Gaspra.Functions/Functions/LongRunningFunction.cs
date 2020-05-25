@@ -1,4 +1,5 @@
-﻿using Gaspra.Functions.Interfaces;
+﻿using Gaspra.Functions.Correlation;
+using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,12 +19,9 @@ namespace Gaspra.Functions.Functions
 
         public string FunctionHelp => "long running";
 
-        public bool ValidateParameters()
-        {
-            return true;
-        }
+        public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters) => true;
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
             var count = 0;
 
@@ -31,7 +29,7 @@ namespace Gaspra.Functions.Functions
             {
                 await Task.Run(() =>
                 {
-                    Thread.Sleep(2000);
+                    Thread.Sleep(500);
 
                     logger.LogInformation("Long running... [{count}]", ++count);
                 });

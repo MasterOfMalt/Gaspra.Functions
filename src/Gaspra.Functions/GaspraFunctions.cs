@@ -54,7 +54,7 @@ namespace Gaspra.Functions
                 }
                 else
                 {
-                    if (function.ValidateParameters())
+                    if (function.ValidateParameters(cxt.FunctionParameters))
                     {
                         logger.LogInformation("Executing [{requestedFunction}] (ctrl+c to exit)",
                             cxt.FunctionName);
@@ -65,7 +65,7 @@ namespace Gaspra.Functions
                                 .Cancel();
                         };
 
-                        await function.Run(cxt.FunctionCancellationSource.Token);
+                        await function.Run(cxt.FunctionCancellationSource.Token, cxt.FunctionParameters);
                     }
                     else
                     {

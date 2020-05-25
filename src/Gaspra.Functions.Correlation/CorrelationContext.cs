@@ -13,7 +13,7 @@ namespace Gaspra.Functions.Correlation
         public DateTimeOffset FunctionTimestamp { get; }
         public CancellationTokenSource FunctionCancellationSource { get; }
         public string FunctionName { get; }
-        public IEnumerable<FunctionParameter> FunctionParameters { get; set; }
+        public IEnumerable<IFunctionParameter> FunctionParameters { get; set; }
 
         public CorrelationContext(string[] args)
         {

@@ -1,8 +1,10 @@
 ﻿using Gaspra.DatabaseUtility.Interfaces;
+using Gaspra.Functions.Correlation;
 using Gaspra.Functions.Correlation.Interfaces;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,16 +26,32 @@ namespace Gaspra.Functions.Bases
             this.jsonDatabaseService = jsonDatabaseService;
         }
 
-        public IEnumerable<string> FunctionAliases => new[] { nameof(JsonDatabase) };
+        public IEnumerable<string> FunctionAliases => new[] { nameof(JsonDatabase), "jd" };
 
         public string FunctionHelp => "json db.";
 
-        public bool ValidateParameters()
+        public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters)
         {
+            if(!parameters.Any())
+            {
+                return false;
+            }
+
+            var connectionString = parameters
+                .Where(p => p.Key.Equals("c"))
+                .FirstOrDefault();
+
+            if(connectionString == null || !connectionString.Values.Any())
+            {
+                return false;
+            }
+
+
+
             return false;
         }
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
             //use cxt to get parameters
 

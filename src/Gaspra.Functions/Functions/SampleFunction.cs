@@ -1,4 +1,5 @@
-﻿using Gaspra.Functions.Correlation.Interfaces;
+﻿using Gaspra.Functions.Correlation;
+using Gaspra.Functions.Correlation.Interfaces;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -25,9 +26,9 @@ namespace Gaspra.Functions.Functions
 
         public string FunctionHelp => "Sample function, requires any parameter be supplied.";
 
-        public bool ValidateParameters()
+        public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters)
         {
-            var hasParameters = cxt.FunctionParameters.Any();
+            var hasParameters = parameters.Any();
 
             if(!hasParameters)
             {
@@ -37,7 +38,7 @@ namespace Gaspra.Functions.Functions
             return hasParameters;
         }
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
             logger.LogInformation("Function: [{cxtFunction}] with correlation id: [{correlationId}]",
                 cxt.FunctionName,

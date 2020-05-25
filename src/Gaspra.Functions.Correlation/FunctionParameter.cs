@@ -2,10 +2,16 @@
 
 namespace Gaspra.Functions.Correlation
 {
-    public class FunctionParameter
+    public interface IFunctionParameter
     {
-        public string Key { get; set; }
-        public IEnumerable<object> Values { get; set; }
+        public string Key { get; }
+        public IEnumerable<object> Values { get; }
+    }
+
+    public class FunctionParameter : IFunctionParameter
+    {
+        public string Key { get; }
+        public IEnumerable<object> Values { get; }
 
         public FunctionParameter(
             string key,
