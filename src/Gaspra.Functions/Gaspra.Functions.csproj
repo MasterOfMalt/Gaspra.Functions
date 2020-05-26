@@ -8,7 +8,7 @@
     <Description>console application of functions</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Gaspra/Gaspra.Functions</PackageProjectUrl>
-    <PackageIcon>gficon.ico</PackageIcon>
+    <PackageIcon>gficon.png</PackageIcon>
     <PackageIconUrl />
     <RepositoryUrl>https://github.com/Gaspra/Gaspra.Functions</RepositoryUrl>
     <AssemblyVersion>0.0.1.0</AssemblyVersion>
@@ -23,7 +23,7 @@
     <ProjectReference Include="..\libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\.build\gficon.ico">
+    <None Include="..\..\.build\gficon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
