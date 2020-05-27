@@ -1,8 +1,5 @@
 ﻿using Gaspra.DatabaseUtility.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Gaspra.DatabaseUtility.Extensions
 {
@@ -12,7 +9,7 @@ namespace Gaspra.DatabaseUtility.Extensions
         {
             serviceCollection
                 .AddSingleton<IDataAccess, DataAccess>()
-                .AddSingleton<IJsonDatabaseService, JsonDatabaseService>();
+                .AddSingleton<IMergeSprocsService, MergeSprocsService>();
 
             return serviceCollection;
         }

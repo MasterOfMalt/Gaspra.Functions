@@ -10,6 +10,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
 {
     public class MergeVariables
     {
+        public string ProcedureName { get; set; }
         public string SchemaName { get; set; }
         public Table Table { get; set; }
         public IEnumerable<Column> TableTypeColumns { get; set; }
@@ -17,12 +18,14 @@ namespace Gaspra.DatabaseUtility.Models.Merge
         public IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin { get; set; }
 
         public MergeVariables(
+            string procedureName,
             string schemaName,
             Table table,
             IEnumerable<Column> tableTypeColumns,
             IEnumerable<Column> mergeIdentifierColumns,
             IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> tablesToJoin)
         {
+            ProcedureName = procedureName;
             SchemaName = schemaName;
             Table = table;
             TableTypeColumns = tableTypeColumns;
@@ -41,6 +44,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 try
                 {
                     mergeVariables.Add(new MergeVariables(
+                        $"Merge{table.Name}",
                         dataStructure.Schema.Name,
                         table,
                         table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
