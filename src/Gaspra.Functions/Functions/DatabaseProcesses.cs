@@ -16,6 +16,8 @@ namespace Gaspra.Functions.Functions
     {
         private readonly IDatabaseProcessesService databaseProcessesService;
 
+        private readonly TimeSpan WaitTime = new TimeSpan(5 * 1000);
+
         public DatabaseProcesses(IDatabaseProcessesService databaseProcessesService)
         {
             this.databaseProcessesService = databaseProcessesService;
@@ -86,7 +88,7 @@ namespace Gaspra.Functions.Functions
                     }
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(WaitTime);
             }
         }
 
