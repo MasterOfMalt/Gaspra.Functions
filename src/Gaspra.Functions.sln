@@ -9,10 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.DatabaseUtility", "libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj", "{DEAEDAAE-D712-4087-A16A-9982B1F4A98E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{F1F0B158-6174-4B04-B4B9-17239906BF21}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1F0B158-6174-4B04-B4B9-17239906BF21}"
 	ProjectSection(SolutionItems) = preProject
-		..\.build\build.ps1 = ..\.build\build.ps1
-		..\.build\publish.yml = ..\.build\publish.yml
+		..\.github\build.ps1 = ..\.github\build.ps1
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{B3104304-E54B-4FC4-991F-63A509B4D4B4}"
@@ -28,7 +27,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".readme", ".readme", "{1E48
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.Functions.Correlation", "Gaspra.Functions.Correlation\Gaspra.Functions.Correlation.csproj", "{1BE961F3-D506-4015-92C8-A6220F01FEBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaspra.DatabaseProcesses", "libraries\Gaspra.DatabaseProcesses\Gaspra.DatabaseProcesses.csproj", "{A1720395-80BA-471D-A299-5A79125F48B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.DatabaseProcesses", "libraries\Gaspra.DatabaseProcesses\Gaspra.DatabaseProcesses.csproj", "{A1720395-80BA-471D-A299-5A79125F48B7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{0ABF5BEB-A913-45EB-A5D6-134648428D16}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\publish.yml = ..\.github\workflows\publish.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +63,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DEAEDAAE-D712-4087-A16A-9982B1F4A98E} = {86753390-5CA8-4566-A614-1BB994E9D5EA}
 		{A1720395-80BA-471D-A299-5A79125F48B7} = {86753390-5CA8-4566-A614-1BB994E9D5EA}
+		{0ABF5BEB-A913-45EB-A5D6-134648428D16} = {F1F0B158-6174-4B04-B4B9-17239906BF21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D350D48F-E918-4E4E-9D9B-7C3611C83BD6}
