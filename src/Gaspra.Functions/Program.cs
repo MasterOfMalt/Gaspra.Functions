@@ -1,6 +1,7 @@
 ﻿using Gaspra.Functions.Correlation.Extensions;
 using Gaspra.Functions.Extensions;
 using Gaspra.Logging.Builder;
+using Gaspra.Logging.Provider.Console;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace Gaspra.Functions
                 logger
                     .SetMinimumLevel(LogLevel.Debug)
                     .ClearProviders()
-                    .AddProviderConsole()
+                    .AddProviderConsoleWithOptions(new ConsoleProviderOptions() { ConsoleFormat = "[level]"} )
                     .AddFilter("Microsoft", LogLevel.Warning);
             })
             .ConfigureServices((host, services) =>

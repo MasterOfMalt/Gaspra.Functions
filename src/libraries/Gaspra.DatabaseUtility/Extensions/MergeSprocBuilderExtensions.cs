@@ -80,7 +80,7 @@ BEGIN
             {
                 var body =
 $@"CREATE TYPE [{schemaName}].[{tableTypeName}] AS TABLE(
-{string.Join($",{Environment.NewLine}", columns.Select(c => $"[{c.Name}] {General.DataType(c)} {General.NullableColumn(c)}"))}
+{string.Join($",{Environment.NewLine}", columns.OrderBy(c => c.Name).Select(c => $"[{c.Name}] {General.DataType(c)} {General.NullableColumn(c)}"))}
 )
 ";
                 return body;
