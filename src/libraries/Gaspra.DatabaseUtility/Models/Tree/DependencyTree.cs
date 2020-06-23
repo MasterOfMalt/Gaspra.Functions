@@ -1,7 +1,9 @@
 ﻿using Gaspra.DatabaseUtility.Extensions;
 using Gaspra.DatabaseUtility.Models.Database;
 using Gaspra.MergeSprocs.Extensions;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Gaspra.DatabaseUtility.Models.Tree
@@ -45,11 +47,11 @@ namespace Gaspra.DatabaseUtility.Models.Tree
             var currentDepthTables = schema
                 .GetTablesFrom(currentDepthTableGuids);
 
-            foreach(var table in currentDepthTables)
+            foreach (var table in currentDepthTables)
             {
                 var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo);
 
-                foreach(var constrainedTable in constrainedTables)
+                foreach (var constrainedTable in constrainedTables)
                 {
                     if (!branches.ContainsTable(constrainedTable))
                     {
@@ -59,9 +61,9 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                          */
                         //if(!constrainedTable.Name.EndsWith("Link"))
                         //{
-                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
+                        branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
 
-                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
+                        branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
                         //}
 
                     }
@@ -73,7 +75,25 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                 /*
                  * distinct stops cyclic dependencies
                  */
-                .Distinct();
+                .Distinct(new DependencyBranchComparison());
+        }
+    }
+
+    public class DependencyBranchComparison : IEqualityComparer<DependencyBranch>
+    {
+        public bool Equals([AllowNull] DependencyBranch x, [AllowNull] DependencyBranch y)
+        {
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
+            return x.TableGuid.Equals(y.TableGuid);
+        }
+
+        public int GetHashCode([DisallowNull] DependencyBranch obj)
+        {
+            return HashCode.Combine(obj.TableGuid);
         }
     }
 }
