@@ -47,7 +47,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
             var currentDepthTables = schema
                 .GetTablesFrom(currentDepthTableGuids);
 
-            foreach (var table in currentDepthTables)
+            foreach (var table in currentDepthTables.Where(t => !branches.Any(b => b.TableGuid.Equals(t.CorrelationId))))
             {
                 var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo);
 
