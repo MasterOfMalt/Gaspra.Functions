@@ -30,7 +30,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                 branches.Add(new DependencyBranch(depth, table.CorrelationId));
             }
 
-            return new DependencyTree(BranchOut(schema, depth, branches));
+            return new DependencyTree(BranchOut(schema, depth, branches).Distinct(new DependencyBranchComparison()));
         }
 
         private static IEnumerable<DependencyBranch> BranchOut(Schema schema, int depth, IList<DependencyBranch> branches)
@@ -71,11 +71,11 @@ namespace Gaspra.DatabaseUtility.Models.Tree
             }
 
             return branchesAtCurrentDepth
-                .ToList()
+                .ToList();
                 /*
                  * distinct stops cyclic dependencies
                  */
-                .Distinct(new DependencyBranchComparison());
+                //.Distinct(new DependencyBranchComparison());
         }
     }
 

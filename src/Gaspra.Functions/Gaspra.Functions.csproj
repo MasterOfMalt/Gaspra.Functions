@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Version>0.2.4</Version>
+    <Version>0.2.5</Version>
     <Authors>Gaspra</Authors>
     <Description>console application of functions</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
