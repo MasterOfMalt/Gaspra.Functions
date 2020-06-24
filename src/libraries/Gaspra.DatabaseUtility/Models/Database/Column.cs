@@ -81,6 +81,16 @@ namespace Gaspra.DatabaseUtility.Models.Database
                         foreignKey = new ForeignKeyConstraint(Guid.NewGuid(), childOf, parentOf);
                     }
 
+                    int? maxLength = null;
+
+                    maxLength = c.MaxLength;
+
+                    if(c.DataType.Equals("nvarchar", StringComparison.InvariantCultureIgnoreCase)
+                        && maxLength != null)
+                    {
+                        maxLength /= 2;
+                    }
+
                     return new Column(
                         Guid.NewGuid(),
                         c.ColumnId,
@@ -88,7 +98,7 @@ namespace Gaspra.DatabaseUtility.Models.Database
                         c.Nullable,
                         c.IdentityColumn,
                         c.DataType,
-                        c.MaxLength,
+                        maxLength,
                         c.Precision,
                         c.Scale,
                         c.SeedValue,

@@ -65,8 +65,7 @@ namespace Gaspra.DatabaseUtility
             /*
              * calculate dependency tree and build data structure
              */
-            var dependencyTree = DependencyTree
-                .Calculate(databaseSchema);
+            var dependencyTree = DependencyTree.Calculate(databaseSchema);
 
             var dataStructure = new DataStructure(databaseSchema, dependencyTree);
 

@@ -30,7 +30,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                 branches.Add(new DependencyBranch(depth, table.CorrelationId));
             }
 
-            return new DependencyTree(BranchOut(schema, depth, branches).Distinct(new DependencyBranchComparison()));
+            return new DependencyTree(BranchOut(schema, depth, branches));
         }
 
         private static IEnumerable<DependencyBranch> BranchOut(Schema schema, int depth, IList<DependencyBranch> branches)
@@ -47,35 +47,30 @@ namespace Gaspra.DatabaseUtility.Models.Tree
             var currentDepthTables = schema
                 .GetTablesFrom(currentDepthTableGuids);
 
-            foreach (var table in currentDepthTables.Where(t => !branches.Any(b => b.TableGuid.Equals(t.CorrelationId))))
+            foreach (var table in currentDepthTables)
             {
                 var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo);
 
-                foreach (var constrainedTable in constrainedTables)
+                foreach (var constrainedTable in constrainedTables.Distinct())
                 {
-                    if (!branches.ContainsTable(constrainedTable))
+                    // todo: handle the composite linking table
+                    if (!constrainedTable.Name.Contains("composite", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        /*
-                         * todo:
-                         * handle link tables
-                         */
-                        //if(!constrainedTable.Name.EndsWith("Link"))
-                        //{
-                        branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
+                        if (!branches.ContainsTable(constrainedTable))
+                        {
 
-                        branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
-                        //}
+                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
 
+                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
+
+                        }
                     }
                 }
             }
 
             return branchesAtCurrentDepth
-                .ToList();
-                /*
-                 * distinct stops cyclic dependencies
-                 */
-                //.Distinct(new DependencyBranchComparison());
+                .ToList()
+                .Distinct(new DependencyBranchComparison());
         }
     }
 
@@ -94,6 +89,24 @@ namespace Gaspra.DatabaseUtility.Models.Tree
         public int GetHashCode([DisallowNull] DependencyBranch obj)
         {
             return HashCode.Combine(obj.TableGuid);
+        }
+    }
+
+    public class TableComparison : IEqualityComparer<Table>
+    {
+        public bool Equals([AllowNull] Table x, [AllowNull] Table y)
+        {
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
+            return x.CorrelationId.Equals(y.CorrelationId);
+        }
+
+        public int GetHashCode([DisallowNull] Table obj)
+        {
+            return HashCode.Combine(obj.CorrelationId);
         }
     }
 }
