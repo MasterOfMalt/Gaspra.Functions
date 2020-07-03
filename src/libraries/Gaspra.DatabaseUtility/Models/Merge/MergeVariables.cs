@@ -208,14 +208,14 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 /*
                  * lower branches
                  */
-                foreach (var branch in relatedBranches.Where(b => b.Depth < tableBranch.Depth))
-                {
-                    var branchTable = schema.GetTableFrom(branch.TableGuid);
-
-                    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
-
-                    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
-                }
+                //foreach (var branch in relatedBranches.Where(b => b.Depth > tableBranch.Depth))
+                //{
+                //    var branchTable = schema.GetTableFrom(branch.TableGuid);
+                //
+                //    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
+                //
+                //    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
+                //}
 
                 /*
                  * higher branches
@@ -224,9 +224,15 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 {
                     var branchTable = schema.GetTableFrom(branch.TableGuid);
 
-                    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
+                    var higherBranchIdentifyingColumns = branchTable
+                        .Columns
+                        .Where(c => c.IdentityColumn);
 
-                    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
+                    var foreignKeyColumnsToHigherBranches = table
+                        .Columns
+                        .Where(c => c.ForeignKey.ParentConstraints.Any(p => p.Equals(branchTable.Name)));
+
+                    identifyingColumns.AddRange(foreignKeyColumnsToHigherBranches);
                 }
             }
 
