@@ -21,7 +21,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
         {
             var branches = new List<DependencyBranch>();
 
-            var factTables = schema.Tables.Where(t => t.ExtendedProperties.Any(e => e.Name.Equals("MergeIdentifier")));
+            var factTables = schema.Tables.Where(t => t.ExtendedProperties.Any(e => e.Name.Equals("FactTable")));
 
             var depth = 1;
 
