@@ -165,12 +165,17 @@ namespace Gaspra.DatabaseUtility.Models.Merge
              * extended property defined merge identifiers
              */
             if(table.ExtendedProperties != null &&
-                table.ExtendedProperties.Any())
+                table.ExtendedProperties.Any(e => e.Name.Equals("MergeIdentifier")))
             {
+                var mergeIdentifyingColumns = table
+                    .ExtendedProperties
+                    .Where(e => e.Name.Equals("MergeIdentifier"))
+                    .First()
+                    .Value
+                    .Split(",");
+
                 var mergeColumns = table.Columns.Where(c =>
-                    table.ExtendedProperties.Any(e =>
-                        e.Value.Split(",").Any(s => s.Equals(c.Name.Equals(s))) &&
-                        e.Name.Equals("MergeIdentifier"))
+                    mergeIdentifyingColumns.Any(m => m.Equals(c.Name))
                     );
 
                 identifyingColumns.AddRange(mergeColumns);
