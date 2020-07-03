@@ -169,7 +169,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             {
                 var mergeColumns = table.Columns.Where(c =>
                     table.ExtendedProperties.Any(e =>
-                        e.Value.Equals(c.Name) &&
+                        e.Value.Split(",").Any(s => s.Equals(c.Name.Equals(s))) &&
                         e.Name.Equals("MergeIdentifier"))
                     );
 
