@@ -23,7 +23,9 @@ namespace Gaspra.DatabaseUtility.Models.Database
             CorrelationId = correlationId;
 
             Name = name;
-            Columns = columns;
+            Columns = columns
+                .OrderBy(c => c.Name)
+                .ToList();
             ExtendedProperties = extendedProperties;
         }
 
