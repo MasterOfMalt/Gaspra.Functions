@@ -15,6 +15,8 @@ namespace Gaspra.DatabaseUtility.Extensions
             if (variables.MergeIdentifierColumns.Any())
             {
                 sproc = $@"{General.Head()}
+{MergeSproc.Drop(variables.SchemaName, variables.ProcedureName())}
+{TableType.Drop(variables.TableTypeName(), variables.SchemaName)}
 {TableType.Head(variables.TableTypeName(), variables.SchemaName)}
 {TableType.Body(variables.TableTypeName(), variables.SchemaName, variables.TableTypeColumns)}
 {TableType.Tail(variables.TableTypeName(), variables.SchemaName)}
@@ -97,7 +99,16 @@ GO
 ";
             }
 
-
+            public static string Drop(string tableTypeName, string schemaName)
+            {
+                return
+$@"IF EXISTS (SELECT 1 FROM [sys].[types] st JOIN [sys].[schemas] ss ON st.schema_id = ss.schema_id WHERE st.name = N'{tableTypeName}' AND ss.name = N'{schemaName}')
+BEGIN
+    DROP TYPE [{schemaName}].[{tableTypeName}]
+END
+GO
+";
+            }
         }
 
         public static class MergeSproc
@@ -175,6 +186,17 @@ $@"END
 GO
 ALTER AUTHORIZATION ON [{schemaName}].[{sprocName}] TO SCHEMA OWNER
 GO";
+            }
+
+            public static string Drop(string schemaName, string sprocName)
+            {
+                return
+$@"IF EXISTS (SELECT 1 FROM [sys].[objects] WHERE [object_id] = OBJECT_ID(N'[{schemaName}].[{sprocName}]') AND [type] IN (N'P'))
+BEGIN
+    DROP PROCEDURE [{schemaName}].[{sprocName}]
+END
+GO
+";
             }
 
         }
