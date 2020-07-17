@@ -30,10 +30,10 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                 branches.Add(new DependencyBranch(depth, table.CorrelationId));
             }
 
-            return new DependencyTree(BranchOut(schema, depth, branches));
+            return new DependencyTree(BranchOut(schema, depth, branches, factTables.Select(f => f.Name)));
         }
 
-        private static IEnumerable<DependencyBranch> BranchOut(Schema schema, int depth, IList<DependencyBranch> branches)
+        private static IEnumerable<DependencyBranch> BranchOut(Schema schema, int depth, IList<DependencyBranch> branches, IEnumerable<string> completedTables)
         {
             var branchesAtCurrentDepth = branches
                 .Where(b => b.Depth.Equals(depth))
@@ -47,6 +47,8 @@ namespace Gaspra.DatabaseUtility.Models.Tree
             var currentDepthTables = schema
                 .GetTablesFrom(currentDepthTableGuids);
 
+            var tablesCompleted = completedTables.ToList();
+
             foreach (var table in currentDepthTables)
             {
                 var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo);
@@ -54,15 +56,15 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                 foreach (var constrainedTable in constrainedTables.Distinct())
                 {
                     // todo: handle the composite linking table
-                    if (!constrainedTable.Name.Contains("composite", StringComparison.InvariantCultureIgnoreCase))
+                    if (!tablesCompleted.Any(t => t.Equals(constrainedTable.Name, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         if (!branches.ContainsTable(constrainedTable))
                         {
-
                             branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
 
-                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth));
+                            tablesCompleted.Add(constrainedTable.Name);
 
+                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth, tablesCompleted));
                         }
                     }
                 }

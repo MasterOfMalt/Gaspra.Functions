@@ -15,6 +15,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
         public Table Table { get; set; }
         public IEnumerable<Column> TableTypeColumns { get; set; }
         public IEnumerable<Column> MergeIdentifierColumns { get; set; }
+        public IEnumerable<Column> DeleteIdentifierColumns { get; set; }
         public IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin { get; set; }
 
         public MergeVariables(
@@ -23,6 +24,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             Table table,
             IEnumerable<Column> tableTypeColumns,
             IEnumerable<Column> mergeIdentifierColumns,
+            IEnumerable<Column> deleteIdentifierColumns,
             IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> tablesToJoin)
         {
             ProcedureName = procedureName;
@@ -30,6 +32,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             Table = table;
             TableTypeColumns = tableTypeColumns;
             MergeIdentifierColumns = mergeIdentifierColumns;
+            DeleteIdentifierColumns = deleteIdentifierColumns;
             TablesToJoin = tablesToJoin;
         }
 
@@ -39,7 +42,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
 
             var errornousTables = new List<Exception>();
 
-            foreach(var table in dataStructure.Schema.Tables)
+            foreach (var table in dataStructure.Schema.Tables)
             {
                 try
                 {
@@ -49,6 +52,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                         table,
                         table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
                         table.MergeIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                        table.DeleteIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
                         table.TablesToJoin(dataStructure.Schema, dataStructure.DependencyTree)));
 
                 }
@@ -164,7 +168,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             /*
              * extended property defined merge identifiers
              */
-            if(table.ExtendedProperties != null &&
+            if (table.ExtendedProperties != null &&
                 table.ExtendedProperties.Any(e => e.Name.Equals("MergeIdentifier")))
             {
                 var mergeIdentifyingColumns = table
@@ -185,7 +189,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
              * if the table only has one column that isn't an identity
              * it's going to be the identifying column
              */
-            if(table.Columns.Where(c => !c.IdentityColumn).Count().Equals(1))
+            if (table.Columns.Where(c => !c.IdentityColumn).Count().Equals(1))
             {
                 identifyingColumns.AddRange(table.Columns.Where(c => !c.IdentityColumn));
             }
@@ -236,9 +240,100 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 }
             }
 
-            if(!identifyingColumns.Distinct().Any())
+            if (!identifyingColumns.Distinct().Any())
             {
                 throw new Exception($"Couldn't calculate identifying columns for [{table.Name}], unable to calculate merge variables");
+            }
+
+            return identifyingColumns
+                .Distinct();
+        }
+
+        public static IEnumerable<Column> DeleteIdentifierColumns(this Table table, Schema schema, DependencyTree dependencyTree)
+        {
+            var identifyingColumns = new List<Column>();
+
+            if (table.Name.Equals("ProductTag"))
+            {
+                /*
+                 * extended property defined merge identifiers
+                 */
+                //if (table.ExtendedProperties != null &&
+                //    table.ExtendedProperties.Any(e => e.Name.Equals("MergeIdentifier")))
+                //{
+                //    var mergeIdentifyingColumns = table
+                //        .ExtendedProperties
+                //        .Where(e => e.Name.Equals("MergeIdentifier"))
+                //        .First()
+                //        .Value
+                //        .Split(",");
+                //
+                //    var mergeColumns = table.Columns.Where(c =>
+                //        mergeIdentifyingColumns.Any(m => m.Equals(c.Name))
+                //        );
+                //
+                //    identifyingColumns.AddRange(mergeColumns);
+                //}
+
+                /*
+                 * if the table only has one column that isn't an identity
+                 * it's going to be the identifying column
+                 */
+                if (table.Columns.Where(c => !c.IdentityColumn).Count().Equals(1))
+                {
+                    identifyingColumns.AddRange(table.Columns.Where(c => !c.IdentityColumn));
+                }
+
+
+                /*
+                 * calculate the higher branches identifiers
+                 * (relating a detail back to a fact)
+                 */
+                var tableBranch = dependencyTree
+                .Branches
+                .Where(b => b.TableGuid.Equals(table.CorrelationId))
+                .FirstOrDefault();
+
+                var relatedBranches = dependencyTree
+                    .GetRelatedBranches(table);
+
+                if (tableBranch != null)
+                {
+                    /*
+                     * lower branches
+                     */
+                    //foreach (var branch in relatedBranches.Where(b => b.Depth > tableBranch.Depth))
+                    //{
+                    //    var branchTable = schema.GetTableFrom(branch.TableGuid);
+                    //
+                    //    var higherBranchIdentifyingColumns = branchTable.Columns.Where(c => c.IdentityColumn);
+                    //
+                    //    identifyingColumns.AddRange(higherBranchIdentifyingColumns);
+                    //}
+
+                    /*
+                     * higher branches
+                     */
+                    foreach (var branch in relatedBranches.Where(b => b.Depth < tableBranch.Depth))
+                    {
+                        var branchTable = schema.GetTableFrom(branch.TableGuid);
+
+                        var higherBranchIdentifyingColumns = branchTable
+                            .Columns
+                            .Where(c => c.IdentityColumn);
+
+                        var foreignKeyColumnsToHigherBranches = table
+                            .Columns
+                            .Where(c => c.ForeignKey.ParentConstraints.Any(p => p.Equals(branchTable.Name)));
+
+                        identifyingColumns.AddRange(foreignKeyColumnsToHigherBranches);
+                    }
+                }
+
+                if (!identifyingColumns.Distinct().Any())
+                {
+                    throw new Exception($"Couldn't calculate identifying columns for [{table.Name}], unable to calculate merge variables");
+                }
             }
 
             return identifyingColumns
@@ -269,7 +364,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 {
                     var branchTable = schema.GetTableFrom(branch.TableGuid);
 
-                    if(branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
+                    if (branchTable.Columns.Where(c => c.ForeignKey.ChildConstraints.Contains(table.Name)).Any())
                     {
                         if (!tablesInJoin.Contains(branchTable))
                         {
@@ -282,7 +377,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 }
             }
 
-            foreach(var tableInJoin in tablesInJoin)
+            foreach (var tableInJoin in tablesInJoin)
             {
                 /*
                  * todo:
