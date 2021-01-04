@@ -1,10 +1,11 @@
 source https://api.nuget.org/v3/index.json
 
 storage: none
-framework: netcore3.1, netstandard2.1
+framework: net5.0
 
 nuget Gaspra.Connection
 nuget Gaspra.Logging.Builder
 nuget Gaspra.Signing
 nuget Microsoft.Extensions.Hosting
+nuget Microsoft.Extensions.Hosting.Abstractions
 nuget System.Data.Sqlclient

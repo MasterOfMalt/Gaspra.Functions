@@ -1,0 +1,9 @@
+type project
+id Gaspra.Functions
+authors Gaspra
+description
+  Gaspra functions
+iconUrl
+  ./gficon.png
+files
+  ../../.github/gficon.png ==>

@@ -185,7 +185,7 @@ WHEN NOT MATCHED BY SOURCE
 ";
 }
 
-                sproc += "    ;";
+                sproc += $"    ;{Environment.NewLine}";
 
                 return sproc;
             }

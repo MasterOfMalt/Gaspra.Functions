@@ -1,4 +1,5 @@
-﻿using Gaspra.Functions.Correlation.Interfaces;
+﻿using Gaspra.Functions.Correlation;
+using Gaspra.Functions.Correlation.Interfaces;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,54 @@ namespace Gaspra.Functions
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            #if DEBUG
+                await SetFunction(cancellationToken);
+            #endif
+
+            await ProcessFunction(cancellationToken);
+
+            hostApplicationLifetime.StopApplication();
+        }
+
+        private Task SetFunction(CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Type a function to use:");
+
+            var function = Console.ReadLine();
+
+            var inputtingParameters = true;
+
+            var parameters = new List<FunctionParameter>();
+
+            while (inputtingParameters)
+            {
+                logger.LogDebug("Type a parameter key (type # when you're done):");
+
+                var parameterKey = Console.ReadLine();
+
+                if (!parameterKey.Equals("#"))
+                {
+                    logger.LogDebug("Type [{parameterKey}] value:", parameterKey);
+
+                    var parameterValue = Console.ReadLine();
+
+                    parameters.Add(new FunctionParameter(parameterKey, new[] { parameterValue }));
+                }
+                else
+                {
+                    inputtingParameters = false;
+                }
+            }
+
+            cxt.FunctionName = function;
+
+            cxt.FunctionParameters = parameters;
+
+            return Task.CompletedTask;
+        }
+
+        private async Task ProcessFunction(CancellationToken cancellationToken)
         {
             var function = functions
                 .Where(f => f.FunctionAliases.Any(f => f.Equals(cxt.FunctionName, StringComparison.InvariantCultureIgnoreCase)))
@@ -74,17 +123,15 @@ namespace Gaspra.Functions
                     }
                 }
             }
-
-
-            hostApplicationLifetime
-                .StopApplication();
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Finished [{requestedFunction}] in [{executionTime}]",
                 cxt.FunctionName,
                 DateTimeOffset.UtcNow - cxt.FunctionTimestamp);
+
+            return Task.CompletedTask;
         }
     }
 }

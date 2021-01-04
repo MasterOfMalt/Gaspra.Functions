@@ -28,7 +28,7 @@ namespace Gaspra.Functions.Bases
 
         public IEnumerable<string> FunctionAliases => new[] { "mergesprocs", "ms" };
 
-        public string FunctionHelp => "json db.";
+        public string FunctionHelp => "Merge sprocs";
 
         public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters)
         {
