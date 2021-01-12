@@ -16,6 +16,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
         public IEnumerable<Column> TableTypeColumns { get; set; }
         public IEnumerable<Column> MergeIdentifierColumns { get; set; }
         public IEnumerable<Column> DeleteIdentifierColumns { get; set; }
+        public RetentionPolicy? RetentionPolicy { get; set; }
         public IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin { get; set; }
 
         public MergeVariables(
@@ -25,6 +26,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             IEnumerable<Column> tableTypeColumns,
             IEnumerable<Column> mergeIdentifierColumns,
             IEnumerable<Column> deleteIdentifierColumns,
+            RetentionPolicy? retentionPolicy,
             IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> tablesToJoin)
         {
             ProcedureName = procedureName;
@@ -33,6 +35,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             TableTypeColumns = tableTypeColumns;
             MergeIdentifierColumns = mergeIdentifierColumns;
             DeleteIdentifierColumns = deleteIdentifierColumns;
+            RetentionPolicy = retentionPolicy;
             TablesToJoin = tablesToJoin;
         }
 
@@ -53,6 +56,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                         table.TableTypeColumns(dataStructure.Schema, dataStructure.DependencyTree),
                         table.MergeIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
                         table.DeleteIdentifierColumns(dataStructure.Schema, dataStructure.DependencyTree),
+                        table.GetRetentionPolicy(),
                         table.TablesToJoin(dataStructure.Schema, dataStructure.DependencyTree)));
 
                 }
@@ -247,6 +251,25 @@ namespace Gaspra.DatabaseUtility.Models.Merge
 
             return identifyingColumns
                 .Distinct();
+        }
+
+        public static RetentionPolicy? GetRetentionPolicy(this Table table)
+        {
+            var retentionPolicies = new List<RetentionPolicy>();
+
+            if (table.ExtendedProperties != null)
+            {
+                if(table.ExtendedProperties.Any(p => p.Name.Equals("RetentionMonths")) && table.ExtendedProperties.Any(p => p.Name.Equals("RetentionComparisonColumn")))
+                {
+                    return new RetentionPolicy
+                    {
+                        ComparisonColumn = table.ExtendedProperties.Where(p => p.Name.Equals("RetentionComparisonColumn")).Select(p => p.Value).First(),
+                        RetentionMonths = table.ExtendedProperties.Where(p => p.Name.Equals("RetentionMonths")).Select(p => p.Value).First()
+                    };
+                }
+            }
+
+            return null;
         }
 
         public static IEnumerable<Column> DeleteIdentifierColumns(this Table table, Schema schema, DependencyTree dependencyTree)
