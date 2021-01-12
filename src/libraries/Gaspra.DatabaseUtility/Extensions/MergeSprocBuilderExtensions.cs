@@ -25,10 +25,10 @@ namespace Gaspra.DatabaseUtility.Extensions
                 if(variables.TablesToJoin != null && variables.TablesToJoin.Any())
                 {
                     sproc += $@"{MergeSproc.TableVariable(variables.ProcedureName(), variables.Table, variables.TableTypeVariableName(), variables.SchemaName, variables.TablesToJoin)}
-{MergeSproc.Body($"{variables.ProcedureName()}Variable", variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.Table, variables.SchemaName)}";
+{MergeSproc.Body($"{variables.ProcedureName()}Variable", variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.RetentionPolicy, variables.Table, variables.SchemaName)}";
                 } else
                 {
-                    sproc += $"{MergeSproc.Body(variables.TableTypeVariableName(), variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.Table, variables.SchemaName)}";
+                    sproc += $"{MergeSproc.Body(variables.TableTypeVariableName(), variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.RetentionPolicy, variables.Table, variables.SchemaName)}";
                 }
 
                 sproc += $@"{MergeSproc.Tail(variables.SchemaName, variables.ProcedureName())}"; //got to figure out how to use the table type columns in the merge body (getting id's for columns that don't exist)
@@ -156,7 +156,7 @@ INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select
                 return column.Name;
             }
 
-            public static string Body(string tableTypeVariable, IEnumerable<string> matchOn, IEnumerable<string> deleteOn, Table databaseTable, string schemaName)
+            public static string Body(string tableTypeVariable, IEnumerable<string> matchOn, IEnumerable<string> deleteOn, RetentionPolicy? retentionPolicy, Table databaseTable, string schemaName)
             {
                 var sproc =
 $@"MERGE [{schemaName}].[{databaseTable.Name}] AS t
@@ -174,8 +174,14 @@ WHEN NOT MATCHED BY TARGET
 WHEN MATCHED
     THEN UPDATE SET
         {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"t.[{c.Name}]=s.[{c.Name}]"))}
-
 ";
+if (retentionPolicy != null)
+{
+                    sproc += $@"
+WHEN NOT MATCHED BY SOURCE AND t.{retentionPolicy.ComparisonColumn} < DATEADD(month, -{retentionPolicy.RetentionMonths}, GETUTCDATE())
+    THEN DELETE
+";
+}
 if (deleteOn.Any())
 {
                     sproc += $@"
@@ -184,7 +190,7 @@ WHEN NOT MATCHED BY SOURCE
     THEN DELETE
 ";
 }
-
+                sproc += $"{Environment.NewLine}";
                 sproc += $"    ;{Environment.NewLine}";
 
                 return sproc;
