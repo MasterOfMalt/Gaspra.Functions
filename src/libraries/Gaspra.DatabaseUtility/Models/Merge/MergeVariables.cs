@@ -255,8 +255,6 @@ namespace Gaspra.DatabaseUtility.Models.Merge
 
         public static RetentionPolicy? GetRetentionPolicy(this Table table)
         {
-            var retentionPolicies = new List<RetentionPolicy>();
-
             if (table.ExtendedProperties != null)
             {
                 if(table.ExtendedProperties.Any(p => p.Name.Equals("RetentionMonths")) && table.ExtendedProperties.Any(p => p.Name.Equals("RetentionComparisonColumn")))
