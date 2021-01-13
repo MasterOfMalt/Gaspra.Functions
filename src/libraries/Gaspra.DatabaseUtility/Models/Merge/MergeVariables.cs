@@ -250,7 +250,8 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             }
 
             return identifyingColumns
-                .Distinct();
+                .Distinct()
+                .OrderBy(c => c.Name);
         }
 
         public static RetentionPolicy? GetRetentionPolicy(this Table table)
@@ -358,7 +359,8 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             }
 
             return identifyingColumns
-                .Distinct();
+                .Distinct()
+                .OrderBy(c => c.Name);
         }
 
         /*
@@ -389,7 +391,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                     {
                         if (!tablesInJoin.Contains(branchTable))
                         {
-                            if (!branchTable.Name.EndsWith("Link"))
+                            if (!branchTable.Name.StartsWith("Link"))
                             {
                                 tablesInJoin.Add(branchTable);
                             }
@@ -411,7 +413,8 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                         ));
             }
 
-            return tablesToJoin;
+            return tablesToJoin
+                .OrderBy(t => t.Item1.Name);
         }
     }
 }
