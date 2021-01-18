@@ -16,7 +16,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
         public IEnumerable<Column> TableTypeColumns { get; set; }
         public IEnumerable<Column> MergeIdentifierColumns { get; set; }
         public IEnumerable<Column> DeleteIdentifierColumns { get; set; }
-        public RetentionPolicy? RetentionPolicy { get; set; }
+        public RetentionPolicy RetentionPolicy { get; set; }
         public IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> TablesToJoin { get; set; }
 
         public MergeVariables(
@@ -26,7 +26,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             IEnumerable<Column> tableTypeColumns,
             IEnumerable<Column> mergeIdentifierColumns,
             IEnumerable<Column> deleteIdentifierColumns,
-            RetentionPolicy? retentionPolicy,
+            RetentionPolicy retentionPolicy,
             IEnumerable<(Table joinTable, IEnumerable<Column> joinColumns, IEnumerable<Column> selectColumns)> tablesToJoin)
         {
             ProcedureName = procedureName;
@@ -198,7 +198,6 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 identifyingColumns.AddRange(table.Columns.Where(c => !c.IdentityColumn));
             }
 
-
             /*
              * calculate the higher branches identifiers
              * (relating a detail back to a fact)
@@ -254,7 +253,7 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 .OrderBy(c => c.Name);
         }
 
-        public static RetentionPolicy? GetRetentionPolicy(this Table table)
+        public static RetentionPolicy GetRetentionPolicy(this Table table)
         {
             if (table.ExtendedProperties != null)
             {

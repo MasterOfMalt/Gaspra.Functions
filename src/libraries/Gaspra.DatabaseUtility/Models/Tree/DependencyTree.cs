@@ -27,7 +27,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
 
             foreach (var table in factTables)
             {
-                branches.Add(new DependencyBranch(depth, table.CorrelationId));
+                branches.Add(new DependencyBranch(depth, table.CorrelationId, table.Name));
             }
 
             return new DependencyTree(BranchOut(schema, depth, branches, factTables.Select(f => f.Name)));
@@ -51,7 +51,8 @@ namespace Gaspra.DatabaseUtility.Models.Tree
 
             foreach (var table in currentDepthTables)
             {
-                var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo);
+                var constrainedTables = schema.GetTablesFrom(table.ConstrainedTo)
+                    .Where(t => !t.Name.StartsWith("Link"));
 
                 foreach (var constrainedTable in constrainedTables.Distinct())
                 {
@@ -60,7 +61,26 @@ namespace Gaspra.DatabaseUtility.Models.Tree
                     {
                         if (!branches.ContainsTable(constrainedTable))
                         {
-                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId));
+                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId, table.Name));
+
+                            tablesCompleted.Add(constrainedTable.Name);
+
+                            branchesAtCurrentDepth.AddRange(BranchOut(schema, nextDepth, branchesAtCurrentDepth, tablesCompleted));
+                        }
+                    }
+                }
+
+                //todo: clean this up, we should be able to order the tables dependencies a little nicer
+                var constrainedLinkTables = schema.GetTablesFrom(table.ConstrainedTo)
+                    .Where(t => t.Name.StartsWith("Link"));
+
+                foreach (var constrainedTable in constrainedLinkTables.Distinct())
+                {
+                    if (!tablesCompleted.Any(t => t.Equals(constrainedTable.Name, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        if (!branches.ContainsTable(constrainedTable))
+                        {
+                            branchesAtCurrentDepth.Add(new DependencyBranch(nextDepth, constrainedTable.CorrelationId, table.Name));
 
                             tablesCompleted.Add(constrainedTable.Name);
 

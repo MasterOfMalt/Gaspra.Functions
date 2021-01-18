@@ -8,6 +8,7 @@ namespace Gaspra.DatabaseUtility.Models.Tree
     {
         public int Depth { get; set; }
         public Guid TableGuid { get; set; }
+        public string TableName { get; set; }
 
         public DependencyBranch(
             int depth,
@@ -15,6 +16,15 @@ namespace Gaspra.DatabaseUtility.Models.Tree
         {
             Depth = depth;
             TableGuid = tableGuid;
+        }
+        public DependencyBranch(
+            int depth,
+            Guid tableGuid,
+            string tableName)
+        {
+            Depth = depth;
+            TableGuid = tableGuid;
+            TableName = tableName;
         }
 
         public override bool Equals(object obj)
