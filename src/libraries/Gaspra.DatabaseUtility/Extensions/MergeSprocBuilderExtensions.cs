@@ -158,7 +158,21 @@ INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select
 
             public static string Body(string tableTypeVariable, IEnumerable<string> matchOn, IEnumerable<string> deleteOn, RetentionPolicy? retentionPolicy, Table databaseTable, string schemaName)
             {
-                var sproc =
+                var sproc = "";
+
+                var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
+
+if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+{
+                    sproc +=
+$@"DECLARE @InsertedValues TABLE (
+    [{databaseTable.Name}Id] INT,
+    {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"[{c.Name}] {General.DataType(c)} {General.NullableColumn(c)}")) }
+){Environment.NewLine}{Environment.NewLine}"
+;
+}
+
+                sproc +=
 $@"MERGE [{schemaName}].[{databaseTable.Name}] AS t
 USING @{tableTypeVariable} AS s
     ON ({string.Join($"{Environment.NewLine}AND ", matchOn.Select(m => $"t.[{m}]=s.[{m}]"))})
@@ -182,16 +196,37 @@ WHEN NOT MATCHED BY SOURCE AND t.{retentionPolicy.ComparisonColumn} < DATEADD(mo
     THEN DELETE
 ";
 }
-if (deleteOn.Any())
+if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
 {
-                    sproc += $@"
-WHEN NOT MATCHED BY SOURCE
-     AND EXISTS (SELECT 1 FROM [{schemaName}].[{databaseTable.Name}] e JOIN @{tableTypeVariable} tt ON {string.Join($" AND ", deleteOn.Select(m => $"t.[{m}]=tt.[{m}]"))} WHERE {string.Join($" AND ", deleteOn.Select(m => $"e.[{m}]=tt.[{m}]"))})
-    THEN DELETE
+    sproc +=
+$@"
+OUTPUT
+    inserted.{databaseTable.Name}Id,
+    {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"inserted.{c.Name}")) }
 ";
+
+//                    sproc += $@"
+//WHEN NOT MATCHED BY SOURCE
+//     AND EXISTS (SELECT 1 FROM [{schemaName}].[{databaseTable.Name}] e JOIN @{tableTypeVariable} tt ON {string.Join($" AND ", deleteOn.Select(m => $"t.[{m}]=tt.[{m}]"))} WHERE {string.Join($" AND ", deleteOn.Select(m => $"e.[{m}]=tt.[{m}]"))})
+//    THEN DELETE
+//";
 }
                 sproc += $"{Environment.NewLine}";
                 sproc += $"    ;{Environment.NewLine}";
+
+if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+{
+    sproc += $@"
+DELETE
+    mrg_table
+FROM
+    [{schemaName}].[{databaseTable.Name}] mrg_table
+    INNER JOIN @InsertedValues iv_inner ON mrg_table.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()} = iv_inner.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()}
+    LEFT JOIN @InsertedValues iv_outer ON mrg_table.{databaseTable.Name}Id = iv_outer.{databaseTable.Name}Id
+";
+}
+
+                sproc += $"{Environment.NewLine}";
 
                 return sproc;
             }
