@@ -215,6 +215,12 @@ namespace Gaspra.DatabaseUtility.Models.Merge
                 /*
                  * lower branches
                  */
+
+                // Add this back in to figure out dependencies on fact tables where the
+                // foreign key is required. This is only on fact tables where the foreign key
+                // constraint is a merge identifer. Dependencies for the foreign key lower down the
+                // branch aren't always merge identifiers
+
                 //foreach (var branch in relatedBranches.Where(b => b.Depth > tableBranch.Depth))
                 //{
                 //    var branchTable = schema.GetTableFrom(branch.TableGuid);
