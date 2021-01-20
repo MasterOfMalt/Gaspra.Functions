@@ -204,12 +204,6 @@ OUTPUT
     inserted.{databaseTable.Name}Id,
     {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"inserted.{c.Name}")) }
 ";
-
-//                    sproc += $@"
-//WHEN NOT MATCHED BY SOURCE
-//     AND EXISTS (SELECT 1 FROM [{schemaName}].[{databaseTable.Name}] e JOIN @{tableTypeVariable} tt ON {string.Join($" AND ", deleteOn.Select(m => $"t.[{m}]=tt.[{m}]"))} WHERE {string.Join($" AND ", deleteOn.Select(m => $"e.[{m}]=tt.[{m}]"))})
-//    THEN DELETE
-//";
 }
                 sproc += $"{Environment.NewLine}";
                 sproc += $"    ;{Environment.NewLine}";
@@ -223,6 +217,8 @@ FROM
     [{schemaName}].[{databaseTable.Name}] mrg_table
     INNER JOIN @InsertedValues iv_inner ON mrg_table.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()} = iv_inner.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()}
     LEFT JOIN @InsertedValues iv_outer ON mrg_table.{databaseTable.Name}Id = iv_outer.{databaseTable.Name}Id
+WHERE
+    iv_outer.{databaseTable.Name}Id IS NULL
 ";
 }
 
