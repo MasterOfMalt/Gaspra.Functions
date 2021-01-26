@@ -59,7 +59,11 @@ GO
             {
                 var dataType = $"[{column.DataType}]";
 
-                if (column.MaxLength.HasValue)
+                if(column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
+                {
+                    dataType += $"({column.Precision.Value},{column.Scale.Value})";
+                }
+                else if (column.MaxLength.HasValue)
                 {
                     dataType += $"({column.MaxLength.Value})";
                 }
