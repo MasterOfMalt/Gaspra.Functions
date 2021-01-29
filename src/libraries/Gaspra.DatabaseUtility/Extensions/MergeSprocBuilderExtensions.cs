@@ -207,6 +207,7 @@ $@"
 OUTPUT
     inserted.{databaseTable.Name}Id,
     {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"inserted.{c.Name}")) }
+INTO @InsertedValues
 ";
 }
                 sproc += $"{Environment.NewLine}";
