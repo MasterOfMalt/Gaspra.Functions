@@ -170,8 +170,8 @@ if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
 {
                     sproc +=
 $@"DECLARE @InsertedValues TABLE (
-    [{databaseTable.Name}Id] INT,
-    {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"[{c.Name}] {General.DataType(c)} {General.NullableColumn(c)}")) }
+    [{databaseTable.Name}Id] [int],
+    {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"[{c.Name}] {General.DataType(c)}")) }
 ){Environment.NewLine}{Environment.NewLine}"
 ;
 }
