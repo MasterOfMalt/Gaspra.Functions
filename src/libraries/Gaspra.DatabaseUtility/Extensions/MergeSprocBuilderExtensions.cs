@@ -22,11 +22,12 @@ namespace Gaspra.DatabaseUtility.Extensions
 {TableType.Tail(variables.TableTypeName(), variables.SchemaName)}
 {MergeSproc.Head(variables.SchemaName, variables.ProcedureName(), variables.TableTypeVariableName(), variables.TableTypeName())}";
 
-                if(variables.TablesToJoin != null && variables.TablesToJoin.Any())
+                if (variables.TablesToJoin != null && variables.TablesToJoin.Any())
                 {
                     sproc += $@"{MergeSproc.TableVariable(variables.ProcedureName(), variables.Table, variables.TableTypeVariableName(), variables.SchemaName, variables.TablesToJoin)}
 {MergeSproc.Body($"{variables.ProcedureName()}Variable", variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.RetentionPolicy, variables.Table, variables.SchemaName)}";
-                } else
+                }
+                else
                 {
                     sproc += $"{MergeSproc.Body(variables.TableTypeVariableName(), variables.MergeIdentifierColumns.Select(c => c.Name), variables.DeleteIdentifierColumns.Select(c => c.Name), variables.RetentionPolicy, variables.Table, variables.SchemaName)}";
                 }
@@ -59,7 +60,7 @@ GO
             {
                 var dataType = $"[{column.DataType}]";
 
-                if(column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
+                if (column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
                 {
                     dataType += $"({column.Precision.Value},{column.Scale.Value})";
                 }
@@ -160,21 +161,21 @@ INNER JOIN {string.Join($"{Environment.NewLine}INNER JOIN ", tablesToJoin.Select
                 return column.Name;
             }
 
-            public static string Body(string tableTypeVariable, IEnumerable<string> matchOn, IEnumerable<string> deleteOn, RetentionPolicy? retentionPolicy, Table databaseTable, string schemaName)
+            public static string Body(string tableTypeVariable, IEnumerable<string> matchOn, IEnumerable<string> deleteOn, RetentionPolicy retentionPolicy, Table databaseTable, string schemaName)
             {
                 var sproc = "";
 
                 var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
 
-if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
-{
+                if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+                {
                     sproc +=
 $@"DECLARE @InsertedValues TABLE (
     [{databaseTable.Name}Id] [int],
     {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"[{c.Name}] {General.DataType(c)}")) }
 ){Environment.NewLine}{Environment.NewLine}"
 ;
-}
+                }
 
                 sproc +=
 $@"MERGE [{schemaName}].[{databaseTable.Name}] AS t
@@ -188,34 +189,41 @@ WHEN NOT MATCHED BY TARGET
     VALUES (
         {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"s.[{c.Name}]"))}
     )
+";
 
+                if(!matchOn.Count().Equals(databaseTable.Columns.Count) &&
+                    !databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase))))
+                {
+                    sproc += $@"
 WHEN MATCHED
     THEN UPDATE SET
         {string.Join($",{Environment.NewLine}        ", databaseTable.Columns.Where(c => !c.IdentityColumn).Select(c => $"t.[{c.Name}]=s.[{c.Name}]"))}
 ";
-if (retentionPolicy != null)
-{
+                }
+
+                if (retentionPolicy != null)
+                {
                     sproc += $@"
 WHEN NOT MATCHED BY SOURCE AND t.{retentionPolicy.ComparisonColumn} < DATEADD(month, -{retentionPolicy.RetentionMonths}, GETUTCDATE())
     THEN DELETE
 ";
-}
-if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
-{
-    sproc +=
-$@"
+                }
+                if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+                {
+                    sproc +=
+                $@"
 OUTPUT
     inserted.{databaseTable.Name}Id,
     {string.Join($",{Environment.NewLine}", databaseTable.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Select(c => $"inserted.{c.Name}")) }
 INTO @InsertedValues
 ";
-}
+                }
                 sproc += $"{Environment.NewLine}";
                 sproc += $"    ;{Environment.NewLine}";
 
-if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
-{
-    sproc += $@"
+                if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+                {
+                    sproc += $@"
 DELETE
     mrg_table
 FROM
@@ -225,7 +233,7 @@ FROM
 WHERE
     iv_outer.{databaseTable.Name}Id IS NULL
 ";
-}
+                }
 
                 sproc += $"{Environment.NewLine}";
 
