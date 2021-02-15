@@ -1,4 +1,5 @@
 ﻿using Gaspra.DatabaseUtility.Extensions;
+using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Models.Database;
 using Gaspra.DatabaseUtility.Models.Tree;
 using Gaspra.MergeSprocs.Extensions;
@@ -8,7 +9,7 @@ using System.Linq;
 
 namespace Gaspra.DatabaseUtility.Models.Merge
 {
-    public class MergeVariables
+    public class MergeVariables : IScriptVariables
     {
         public string ProcedureName { get; set; }
         public string SchemaName { get; set; }

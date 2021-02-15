@@ -18,16 +18,28 @@ namespace Gaspra.DatabaseUtility
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
 
+        private readonly IScriptFactory _scriptFactory;
+
         public MergeSprocsService(
             ILogger<MergeSprocsService> logger,
-            IDataAccess dataAccess)
+            IDataAccess dataAccess,
+            IScriptFactory scriptFactory)
         {
             this.logger = logger;
             this.dataAccess = dataAccess;
+
+            _scriptFactory = scriptFactory;
         }
 
         public async Task<IEnumerable<MergeStatement>> GenerateMergeSprocs(string connectionString, IEnumerable<string> schemaNames)
         {
+            var result = await _scriptFactory.ScriptFrom(null);
+
+            return new List<MergeStatement>();
+
+
+
+
             Schema databaseSchema = null;
             var schemaName = "Analytics";
 
