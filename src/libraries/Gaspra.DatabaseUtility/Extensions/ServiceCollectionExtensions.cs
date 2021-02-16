@@ -16,7 +16,13 @@ namespace Gaspra.DatabaseUtility.Extensions
             serviceCollection
                 .AddSingleton<IScriptLineFactory, ScriptLineFactory>()
                 .AddSingleton<IScriptFactory, ScriptFactory>()
-                .AddSingleton<IScriptSection, SettingsSection>();
+                .AddSingleton<IScriptSection, SettingsSection>()
+                .AddSingleton<IScriptSection, AboutSection>()
+                .AddSingleton<IScriptSection, DropMergeSection>()
+                .AddSingleton<IScriptSection, DropTableTypeSection>()
+                .AddSingleton<IScriptSection, CreateTableTypeSection>()
+                ;
+
 
             //todo; register all instances of IScriptSection automagically
             //serviceCollection.Add(ServiceDescriptor item)

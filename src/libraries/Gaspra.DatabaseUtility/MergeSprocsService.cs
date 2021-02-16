@@ -33,13 +33,6 @@ namespace Gaspra.DatabaseUtility
 
         public async Task<IEnumerable<MergeStatement>> GenerateMergeSprocs(string connectionString, IEnumerable<string> schemaNames)
         {
-            var result = await _scriptFactory.ScriptFrom(null);
-
-            return new List<MergeStatement>();
-
-
-
-
             Schema databaseSchema = null;
             var schemaName = "Analytics";
 
@@ -106,6 +99,8 @@ namespace Gaspra.DatabaseUtility
 
             foreach (var mergeVariable in mergeVariables)
             {
+                var script = await _scriptFactory.ScriptFrom(mergeVariable);
+
                 mergeStatements.Add(new MergeStatement(mergeVariable.BuildMergeSproc(), mergeVariable));
             }
 

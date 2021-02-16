@@ -93,6 +93,21 @@ namespace Gaspra.DatabaseUtility.Models.Merge
             return $"TT_{variables.Table.Name}";
         }
 
+        public static string ProcedureName(this IScriptVariables variables)
+        {
+            return $"Merge{variables.Table.Name}";
+        }
+
+        public static string TableTypeVariableName(this IScriptVariables variables)
+        {
+            return $"{variables.Table.Name}";
+        }
+
+        public static string TableTypeName(this IScriptVariables variables)
+        {
+            return $"TT_{variables.Table.Name}";
+        }
+
         /*
          * calculate all the columns needed for the table type associated with the merge sproc
          */
