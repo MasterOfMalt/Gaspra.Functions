@@ -11,7 +11,7 @@ namespace Gaspra.DatabaseUtility.Sections
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order => new ScriptOrder(new[] { 0, 2 });
+        public ScriptOrder Order => new ScriptOrder(new[] { 0, 3 });
 
         public AboutSection(IScriptLineFactory scriptLineFactory)
         {

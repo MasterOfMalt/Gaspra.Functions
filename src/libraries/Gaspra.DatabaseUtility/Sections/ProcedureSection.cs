@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace Gaspra.DatabaseUtility.Sections
 {
-    public class CreateTableTypeSection : IScriptSection
+    public class ProcedureSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 0, 2, 0 });
+        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 1 });
 
-        public CreateTableTypeSection(IScriptLineFactory scriptLineFactory)
+        public ProcedureSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
@@ -28,39 +28,13 @@ namespace Gaspra.DatabaseUtility.Sections
 
         public async Task<string> Value(IScriptVariables variables)
         {
-            var createTypeLines = new List<string>
-            {
-                $"IF NOT EXISTS (SELECT 1 FROM [sys].[types] st JOIN [sys].[schemas] ss ON st.schema_id = ss.schema_id WHERE st.name = N'{variables.TableTypeName()}' AND ss.name = N'{variables.SchemaName}')",
-                "BEGIN",
-                $"    CREATE TYPE [{variables.SchemaName}].[{variables.TableTypeName()}] AS TABLE("
-            };
-
-            foreach(var column in variables.TableTypeColumns.OrderBy(c => c.Name))
-            {
-                var columnDescription = $"        [{column.Name}] {DataType(column)} {NullableColumn(column)}";
-
-                if(column != variables.TableTypeColumns.OrderBy(c => c.Name).Last())
-                {
-                    columnDescription += ",";
-                }
-
-                createTypeLines.Add(columnDescription);
-            }
-
-            createTypeLines.AddRange(
-                new List<string>
-                {
-                    "    )",
-                    "END",
-                    "GO",
-                    "",
-                    $"ALTER AUTHORIZATION ON TYPE::[{variables.SchemaName}].[{variables.TableTypeName()}] TO SCHEMA OWNER",
-                    "GO"
-                });
-
             var scriptLines = await _scriptLineFactory.LinesFrom(
-                0,
-                createTypeLines.ToArray()
+                1,
+                "-- sproc content",
+                "-- sproc content",
+                "-- sproc content",
+                "-- sproc content",
+                "-- sproc content"
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);

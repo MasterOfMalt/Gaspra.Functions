@@ -18,9 +18,13 @@ namespace Gaspra.DatabaseUtility.Extensions
                 .AddSingleton<IScriptFactory, ScriptFactory>()
                 .AddSingleton<IScriptSection, SettingsSection>()
                 .AddSingleton<IScriptSection, AboutSection>()
-                .AddSingleton<IScriptSection, DropMergeSection>()
+                .AddSingleton<IScriptSection, DropProcedureSection>()
                 .AddSingleton<IScriptSection, DropTableTypeSection>()
                 .AddSingleton<IScriptSection, CreateTableTypeSection>()
+                .AddSingleton<IScriptSection, CreateProcedureSection>()
+                .AddSingleton<IScriptSection, AlterProcedureSection>()
+                .AddSingleton<IScriptSection, ProcedureSection>()
+                .AddSingleton<IScriptSection, EndProcedureSection>()
                 ;
 
 
