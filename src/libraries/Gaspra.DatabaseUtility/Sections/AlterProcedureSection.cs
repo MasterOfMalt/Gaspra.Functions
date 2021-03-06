@@ -12,7 +12,7 @@ namespace Gaspra.DatabaseUtility.Sections
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1 });
+        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 0, 4 });
 
         public AlterProcedureSection(IScriptLineFactory scriptLineFactory)
         {

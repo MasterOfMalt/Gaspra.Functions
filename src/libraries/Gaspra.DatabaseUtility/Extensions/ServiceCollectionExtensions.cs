@@ -1,6 +1,7 @@
 ﻿using Gaspra.DatabaseUtility.Factories;
 using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Sections;
+using Gaspra.DatabaseUtility.Sections.Procedure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Gaspra.DatabaseUtility.Extensions
@@ -23,8 +24,10 @@ namespace Gaspra.DatabaseUtility.Extensions
                 .AddSingleton<IScriptSection, CreateTableTypeSection>()
                 .AddSingleton<IScriptSection, CreateProcedureSection>()
                 .AddSingleton<IScriptSection, AlterProcedureSection>()
-                .AddSingleton<IScriptSection, ProcedureSection>()
                 .AddSingleton<IScriptSection, EndProcedureSection>()
+                .AddSingleton<IScriptSection, InsertValuesSection>()
+                .AddSingleton<IScriptSection, MergeSection>()
+                .AddSingleton<IScriptSection, TableVariableSection>()
                 ;
 
 
