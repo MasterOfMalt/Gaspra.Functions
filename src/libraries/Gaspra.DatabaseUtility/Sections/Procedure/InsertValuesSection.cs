@@ -44,7 +44,7 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
 
             foreach(var columnLine in columnLines)
             {
-                var line = $"[{columnLine.Name}] {DataType(columnLine)}";
+                var line = $"    [{columnLine.Name}] {DataType(columnLine)}";
 
                 if (columnLine != columnLines.Last())
                 {

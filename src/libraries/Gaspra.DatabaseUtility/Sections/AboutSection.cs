@@ -40,7 +40,7 @@ namespace Gaspra.DatabaseUtility.Sections
 
             var start = "/" + new string('*', longestLine + 2);
 
-            var end = " " + new string('*', longestLine + 2) + "\\";
+            var end = " " + new string('*', longestLine + 2) + "/";
 
             var aboutLines = new List<string>
             {

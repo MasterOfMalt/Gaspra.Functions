@@ -55,7 +55,6 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
             mergeStatement.Add("    THEN INSERT (");
 
             var insertColumns = variables.Table.Columns.Where(c => !c.IdentityColumn);
-                //variables.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase)));
 
             foreach (var column in insertColumns)
             {
@@ -86,6 +85,78 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
             }
 
             mergeStatement.Add("    )");
+
+            if(!matchOn.Count().Equals(variables.Table.Columns.Count) &&
+                !variables.Table.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase))))
+            {
+                mergeStatement.AddRange(new List<string>
+                {
+                    "WHEN MATCHED",
+                    "    THEN UPDATE SET"
+                });
+
+                var updateColumns = variables.Table.Columns.Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase)));
+
+                foreach (var column in updateColumns)
+                {
+                    var line = $"        t.[{column.Name}]=s.[{column.Name}]";
+
+                    mergeStatement.Add(line);
+                }
+            }
+
+            if (variables.RetentionPolicy != null)
+            {
+                mergeStatement.AddRange(new List<string>
+                {
+                    $"WHEN NOT MATCHED BY SOURCE AND t.{variables.RetentionPolicy.ComparisonColumn} < DATEADD(MONTH, -{variables.RetentionPolicy.RetentionMonths}, GETUTCDATE())",
+                    "    THEN DELETE"
+                });
+            }
+
+            var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
+
+            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+            {
+                mergeStatement.AddRange(new List<string>
+                {
+                    "OUTPUT",
+                    $"    inserted.{variables.Table.Name}Id,"
+                });
+
+                var insertedColumns = variables.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name)));
+
+                foreach (var column in insertedColumns)
+                {
+                    var line = $"    inserted.{column.Name}";
+
+                    if (column != insertedColumns.Last())
+                    {
+                        line += ",";
+                    }
+
+                    mergeStatement.Add(line);
+                }
+
+                mergeStatement.Add("INTO @InsertedValues;");
+            }
+
+            if (!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any())
+            {
+                mergeStatement.AddRange(new List<string>
+                {
+                    "DELETE",
+                    "    mrg_table",
+                    "FROM",
+                    $"    [{variables.SchemaName}].[{variables.Table.Name}] mrg_table",
+                    $"    INNER JOIN @InsertedValues iv_inner ON mrg_table.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()} = iv_inner.{matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault()}",
+                    $"    LEFT JOIN @InsertedValues iv_outer ON mrg_table.{variables.Table.Name}Id = iv_outer.{variables.Table.Name}Id",
+                    "WHERE",
+                    $"    iv_outer.{variables.Table.Name}Id IS NULL"
+                });
+            }
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

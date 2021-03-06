@@ -32,7 +32,7 @@ namespace Gaspra.DatabaseUtility.Sections
                 0,
                 $"IF NOT EXISTS (SELECT 1 FROM [sys].[objects] WHERE [object_id] = OBJECT_ID(N'[{variables.SchemaName}].[{variables.ProcedureName()}]') AND [type] IN (N'P'))",
                 "BEGIN",
-                $"    EXEC [dbo].[sp_executesql] @statement = N'CREATE PROCEDURE [{variables.SchemaName}].[{variables.ProcedureName()}] AS",
+                $"    EXEC [dbo].[sp_executesql] @statement = N'CREATE PROCEDURE [{variables.SchemaName}].[{variables.ProcedureName()}] AS '",
                 "END",
                 "GO"
                 );

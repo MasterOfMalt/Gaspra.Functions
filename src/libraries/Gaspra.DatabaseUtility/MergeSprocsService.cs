@@ -101,7 +101,7 @@ namespace Gaspra.DatabaseUtility
             {
                 var script = await _scriptFactory.ScriptFrom(mergeVariable);
 
-                mergeStatements.Add(new MergeStatement(mergeVariable.BuildMergeSproc(), mergeVariable));
+                mergeStatements.Add(new MergeStatement(script, mergeVariable));
             }
 
             logger.LogInformation("Built [{mergeStatementCount}] merge statements",
