@@ -18,12 +18,17 @@ namespace Gaspra.DatabaseUtility
         private readonly ILogger logger;
         private readonly IDataAccess dataAccess;
 
+        private readonly IScriptFactory _scriptFactory;
+
         public MergeSprocsService(
             ILogger<MergeSprocsService> logger,
-            IDataAccess dataAccess)
+            IDataAccess dataAccess,
+            IScriptFactory scriptFactory)
         {
             this.logger = logger;
             this.dataAccess = dataAccess;
+
+            _scriptFactory = scriptFactory;
         }
 
         public async Task<IEnumerable<MergeStatement>> GenerateMergeSprocs(string connectionString, IEnumerable<string> schemaNames)
@@ -94,7 +99,9 @@ namespace Gaspra.DatabaseUtility
 
             foreach (var mergeVariable in mergeVariables)
             {
-                mergeStatements.Add(new MergeStatement(mergeVariable.BuildMergeSproc(), mergeVariable));
+                var script = await _scriptFactory.ScriptFrom(mergeVariable);
+
+                mergeStatements.Add(new MergeStatement(script, mergeVariable));
             }
 
             logger.LogInformation("Built [{mergeStatementCount}] merge statements",
