@@ -2,14 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Gaspra.DatabaseUtility.Factories
 {
     public class ScriptFactory : IScriptFactory
     {
-        private IReadOnlyCollection<IScriptSection> _scriptSections;
+        private readonly IReadOnlyCollection<IScriptSection> _scriptSections;
 
         public ScriptFactory(IEnumerable<IScriptSection> scriptSections)
         {

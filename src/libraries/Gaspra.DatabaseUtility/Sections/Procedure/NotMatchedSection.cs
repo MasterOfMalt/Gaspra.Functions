@@ -32,7 +32,7 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
             var mergeStatement = new List<string>
             {
                 $"WHEN NOT MATCHED BY TARGET",
-                $"    THEN INSERT )"
+                $"    THEN INSERT ("
             };
 
             var insertColumns = variables.Table.Columns.Where(c => !c.IdentityColumn);

@@ -38,7 +38,7 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
 
             foreach (var match in matchOn)
             {
-                var line = $"    t.[{match}]=s[{match}]";
+                var line = $"    t.[{match}]=s.[{match}]";
 
                 if (match != matchOn.Last())
                 {
