@@ -45,6 +45,11 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
             {
                 var line = $"        t.[{column.Name}]=s.[{column.Name}]";
 
+                if (column != updateColumns.Last())
+                {
+                    line += ",";
+                }
+
                 mergeStatement.Add(line);
             }
 
