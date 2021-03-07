@@ -1,19 +1,21 @@
 ﻿using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Models.Database;
+using Gaspra.DatabaseUtility.Models.Merge;
 using Gaspra.DatabaseUtility.Models.Script;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Gaspra.DatabaseUtility.Sections.Procedure
 {
-    public class InsertValuesSection : IScriptSection
+    public class MatchedSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 1 });
+        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 2, 2 });
 
-        public InsertValuesSection(IScriptLineFactory scriptLineFactory)
+        public MatchedSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
@@ -22,42 +24,33 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
         {
             var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
 
-            var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
-
-            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-
-            return Task.FromResult(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any());
+            return Task.FromResult(
+                !matchOn.Count().Equals(variables.Table.Columns.Count) &&
+                !variables.Table.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase))));
         }
 
         public async Task<string> Value(IScriptVariables variables)
         {
             var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
 
-            var insertValues = new List<string>
+            var updateColumns = variables.Table.Columns.Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase)));
+
+            var mergeStatement = new List<string>
             {
-                "DECLARE @InsertedValues TABLE (",
-                $"    [{variables.Table.Name}Id] [int],"
+                $"WHEN MATCHED",
+                $"    THEN UPDATE SET"
             };
 
-            var columnLines = variables.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name)));
-
-            foreach(var columnLine in columnLines)
+            foreach (var column in updateColumns)
             {
-                var line = $"    [{columnLine.Name}] {DataType(columnLine)}";
+                var line = $"        t.[{column.Name}]=s.[{column.Name}]";
 
-                if (columnLine != columnLines.Last())
-                {
-                    line += ",";
-                }
-
-                insertValues.Add(line);
+                mergeStatement.Add(line);
             }
-
-            insertValues.Add(")");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,
-                insertValues.ToArray()
+                mergeStatement.ToArray()
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);

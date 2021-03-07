@@ -3,6 +3,8 @@ using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Sections;
 using Gaspra.DatabaseUtility.Sections.Procedure;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
+using System.Reflection;
 
 namespace Gaspra.DatabaseUtility.Extensions
 {
@@ -17,22 +19,14 @@ namespace Gaspra.DatabaseUtility.Extensions
             serviceCollection
                 .AddSingleton<IScriptLineFactory, ScriptLineFactory>()
                 .AddSingleton<IScriptFactory, ScriptFactory>()
-                .AddSingleton<IScriptSection, SettingsSection>()
-                .AddSingleton<IScriptSection, AboutSection>()
-                .AddSingleton<IScriptSection, DropProcedureSection>()
-                .AddSingleton<IScriptSection, DropTableTypeSection>()
-                .AddSingleton<IScriptSection, CreateTableTypeSection>()
-                .AddSingleton<IScriptSection, CreateProcedureSection>()
-                .AddSingleton<IScriptSection, AlterProcedureSection>()
-                .AddSingleton<IScriptSection, EndProcedureSection>()
-                .AddSingleton<IScriptSection, InsertValuesSection>()
-                .AddSingleton<IScriptSection, MergeSection>()
-                .AddSingleton<IScriptSection, TableVariableSection>()
                 ;
 
+            var scriptSections = Assembly.GetExecutingAssembly().DefinedTypes.Where(t => t.GetInterfaces().Contains(typeof(IScriptSection))).Select(t => new ServiceDescriptor(typeof(IScriptSection), t, ServiceLifetime.Singleton));
 
-            //todo; register all instances of IScriptSection automagically
-            //serviceCollection.Add(ServiceDescriptor item)
+            foreach(var scriptSection in scriptSections)
+            {
+                serviceCollection.Add(scriptSection);
+            }
 
             return serviceCollection;
         }

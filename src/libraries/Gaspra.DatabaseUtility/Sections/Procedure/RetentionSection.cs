@@ -1,63 +1,41 @@
 ﻿using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Models.Database;
+using Gaspra.DatabaseUtility.Models.Merge;
 using Gaspra.DatabaseUtility.Models.Script;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Gaspra.DatabaseUtility.Sections.Procedure
 {
-    public class InsertValuesSection : IScriptSection
+    public class RetentionSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 1 });
+        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 2, 3 });
 
-        public InsertValuesSection(IScriptLineFactory scriptLineFactory)
+        public RetentionSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
         public Task<bool> Valid(IScriptVariables variables)
         {
-            var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
-
-            var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
-
-            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-
-            return Task.FromResult(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any());
+            return Task.FromResult(variables.RetentionPolicy != null);
         }
 
         public async Task<string> Value(IScriptVariables variables)
         {
-            var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
-
-            var insertValues = new List<string>
+            var mergeStatement = new List<string>
             {
-                "DECLARE @InsertedValues TABLE (",
-                $"    [{variables.Table.Name}Id] [int],"
+                $"WHEN NOT MATCHED BY SOURCE AND t.{variables.RetentionPolicy.ComparisonColumn} < DATEADD(MONTH, -{variables.RetentionPolicy.RetentionMonths}, GETUTCDATE())",
+                "    THEN DELETE"
             };
-
-            var columnLines = variables.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name)));
-
-            foreach(var columnLine in columnLines)
-            {
-                var line = $"    [{columnLine.Name}] {DataType(columnLine)}";
-
-                if (columnLine != columnLines.Last())
-                {
-                    line += ",";
-                }
-
-                insertValues.Add(line);
-            }
-
-            insertValues.Add(")");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,
-                insertValues.ToArray()
+                mergeStatement.ToArray()
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);
