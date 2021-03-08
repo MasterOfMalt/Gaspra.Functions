@@ -29,10 +29,12 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
         {
             var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
 
+            var usingType = (variables.TablesToJoin != null && variables.TablesToJoin.Any()) ? $"{variables.ProcedureName}Variable" : $"{variables.TableTypeVariableName()}";
+
             var mergeStatement = new List<string>
             {
                 $"MERGE [{variables.SchemaName}].[{variables.Table.Name}] AS t",
-                $"USING @{variables.TableTypeVariableName()} AS s",
+                $"USING @{usingType} AS s",
                 $"ON ("
             };
 

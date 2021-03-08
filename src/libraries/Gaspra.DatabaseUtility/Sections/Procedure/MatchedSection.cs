@@ -33,7 +33,7 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
         {
             var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
 
-            var updateColumns = variables.Table.Columns.Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase)));
+            var updateColumns = variables.Table.Columns.Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase))).Where(c => !c.IdentityColumn);
 
             var mergeStatement = new List<string>
             {
