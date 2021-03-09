@@ -1,4 +1,5 @@
 ﻿using Gaspra.DatabaseUtility.Interfaces;
+using Gaspra.DatabaseUtility.Models.Database;
 using Gaspra.DatabaseUtility.Models.Merge;
 using Gaspra.DatabaseUtility.Models.Script;
 using System;
@@ -44,11 +45,61 @@ namespace Gaspra.DatabaseUtility.Sections
 
             var retentionAmount = retention ? $"({variables.RetentionPolicy.RetentionMonths} months)" : "";
 
+            var tableTypeFields = new List<string>();
+
+            foreach (var column in variables.TableTypeColumns.OrderBy(c => c.Name))
+            {
+                var columnDescription = $" **         [{column.Name}] {DataType(column)} {NullableColumn(column)}";
+
+                if (column != variables.TableTypeColumns.OrderBy(c => c.Name).Last())
+                {
+                    columnDescription += ",";
+                }
+
+                tableTypeFields.Add(columnDescription);
+            }
+
+            var dependantTables = new List<string>();
+
+            foreach (var dependantTable in variables.TablesToJoin)
+            {
+                var table = $" **     [{variables.SchemaName}].[{dependantTable.joinTable.Name}]";
+
+                if(dependantTable != variables.TablesToJoin.Last())
+                {
+                    table += ",";
+                }
+
+                dependantTables.Add(table);
+            }
+
             var aboutText = new List<string>
             {
                 $" ** [{variables.SchemaName}].[{variables.ProcedureName()}]",
                 $" **",
-                $" ** Generated stored procedure for the table: [{variables.SchemaName}].[{variables.Table.Name}]",
+                $" ** Expects table type parameter: @{variables.TableTypeVariableName()} as",
+                $" **     [{variables.SchemaName}].[{variables.TableTypeName()}] ("
+            };
+
+            aboutText.AddRange(tableTypeFields);
+
+            aboutText.AddRange(new List<string>
+            {
+                $" **     )",
+                $" **",
+                $" ** Merges data into table:",
+                $" **     [{variables.SchemaName}].[{variables.Table.Name}]"
+            });
+
+            if(dependantTables.Any())
+            {
+                aboutText.Add(" **");
+                aboutText.Add(" ** Merge requires data from:");
+
+                aboutText.AddRange(dependantTables);
+            }
+
+            aboutText.AddRange(new List<string> {
                 $"#pad",
                 $" ** Inserts: {inserts}",
                 $" ** Updates: {updates}",
@@ -56,7 +107,7 @@ namespace Gaspra.DatabaseUtility.Sections
                 $" ** Retention policy: {retention} {retentionAmount}",
                 $"#pad",
                 $" ** Gaspra.Functions v{Assembly.GetEntryAssembly().GetName().Version}"
-            };
+            });
 
             var affix = " **";
 
@@ -94,6 +145,27 @@ namespace Gaspra.DatabaseUtility.Sections
                 aboutLines.ToArray());
 
             return await _scriptLineFactory.StringFrom(scriptLines);
+        }
+
+        private static string DataType(Column column)
+        {
+            var dataType = $"[{column.DataType}]";
+
+            if (column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
+            {
+                dataType += $"({column.Precision.Value},{column.Scale.Value})";
+            }
+            else if (column.MaxLength.HasValue)
+            {
+                dataType += $"({column.MaxLength.Value})";
+            }
+
+            return dataType;
+        }
+
+        private static string NullableColumn(Column column)
+        {
+            return column.Nullable ? "NULL" : "NOT NULL";
         }
     }
 }

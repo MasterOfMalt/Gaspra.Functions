@@ -29,6 +29,7 @@ namespace Gaspra.DatabaseUtility.Sections.Procedure
         {
             var mergeStatement = new List<string>
             {
+                $"/** End of merge statement **/",
                 $";"
             };
 
