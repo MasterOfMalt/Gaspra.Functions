@@ -25,30 +25,31 @@ namespace Gaspra.DatabaseUtility
 
         public async Task<string> SerializeDatabaseToJson(string connectionString, IEnumerable<string> schemaNames)
         {
-            var columnInformation = await dataAccess.GetColumnInformation(connectionString);
-
-            var foreignKeyInformation = await dataAccess.GetFKConstraintInformation(connectionString);
-
-            var extendedPropertyInformation = await dataAccess.GetExtendedProperties(connectionString);
-
-            var databaseSchemas = Schema
-                .From(columnInformation, extendedPropertyInformation, foreignKeyInformation)
-                .Where(s => schemaNames.Contains(s.Name));
-
-            foreach(var schema in databaseSchemas)
-            {
-                schema.CalculateDependencies();
-            }
-
-            var json = JsonConvert.SerializeObject(
-                databaseSchemas,
-                Formatting.Indented,
-                new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-            return json;
+            return "";
+            //var columnInformation = await dataAccess.GetColumnInformation(connectionString);
+            //
+            //var foreignKeyInformation = await dataAccess.GetFKConstraintInformation(connectionString);
+            //
+            //var extendedPropertyInformation = await dataAccess.GetExtendedProperties(connectionString);
+            //
+            //var databaseSchemas = Schema
+            //    .From(columnInformation, extendedPropertyInformation, foreignKeyInformation)
+            //    .Where(s => schemaNames.Contains(s.Name));
+            //
+            //foreach(var schema in databaseSchemas)
+            //{
+            //    schema.CalculateDependencies();
+            //}
+            //
+            //var json = JsonConvert.SerializeObject(
+            //    databaseSchemas,
+            //    Formatting.Indented,
+            //    new JsonSerializerSettings
+            //    {
+            //        NullValueHandling = NullValueHandling.Ignore
+            //    });
+            //
+            //return json;
         }
     }
 }

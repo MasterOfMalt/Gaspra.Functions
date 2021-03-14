@@ -30,9 +30,9 @@ namespace Gaspra.DatabaseUtility.Models.Database
         }
 
         public static IList<Table> From(
-            IList<ColumnInformation> columnInformation,
-            IList<ExtendedPropertyInformation> extendedPropertyInformation,
-            IList<FKConstraintInformation> foreignKeyConstraintInformation)
+            IReadOnlyCollection<ColumnInformation> columnInformation,
+            IReadOnlyCollection<ExtendedPropertyInformation> extendedPropertyInformation,
+            IReadOnlyCollection<FKConstraintInformation> foreignKeyConstraintInformation)
         {
             var distinctTables = columnInformation.Distinct(new ColumnComparerByTableName());
 

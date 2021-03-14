@@ -41,11 +41,13 @@ namespace Gaspra.DatabaseUtility
              */
             try
             {
-                var columnInfo = await dataAccess.GetColumnInformation(connectionString);
+                var databaseInformation = await dataAccess.GetDatabaseInformation(connectionString);
 
-                var fkInfo = await dataAccess.GetFKConstraintInformation(connectionString);
+                var columnInfo = databaseInformation.Columns;
 
-                var extendedProps = await dataAccess.GetExtendedProperties(connectionString);
+                var fkInfo = databaseInformation.ForeignKeys;
+
+                var extendedProps = databaseInformation.ExtendedProperties;
 
                 databaseSchema = Schema
                     .From(columnInfo, extendedProps, fkInfo)

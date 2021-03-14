@@ -24,9 +24,9 @@ namespace Gaspra.DatabaseUtility.Models.Database
         }
 
         public static IList<Schema> From(
-            IList<ColumnInformation> columnInformation,
-            IList<ExtendedPropertyInformation> extendedPropertyInformation,
-            IList<FKConstraintInformation> foreignKeyConstraintInformation)
+            IReadOnlyCollection<ColumnInformation> columnInformation,
+            IReadOnlyCollection<ExtendedPropertyInformation> extendedPropertyInformation,
+            IReadOnlyCollection<FKConstraintInformation> foreignKeyConstraintInformation)
         {
             var schemas = columnInformation
                 .Distinct(new ColumnComparerBySchemaName())

@@ -11,11 +11,11 @@ namespace Gaspra.DatabaseUtility
 {
     public class DataAccess : IDataAccess
     {
-        public async Task<IList<ColumnInformation>> GetColumnInformation(string connectionString)
+        public async Task<DatabaseInformation> GetDatabaseInformation(string connectionString)
         {
             using var connection = new SqlConnection(connectionString);
 
-            var command = new SqlCommand(StoredProcedureExtensions.GetColumnInformation(), connection)
+            var command = new SqlCommand(StoredProcedureExtensions.GetDatabaseInformation(), connection)
             {
                 CommandType = CommandType.Text
             };
@@ -24,45 +24,22 @@ namespace Gaspra.DatabaseUtility
 
             using var dataReader = await command.ExecuteReaderAsync();
 
-            var columnInformationModels = await ColumnInformation.FromDataReader(dataReader);
+            var columnInformation = await ColumnInformation.FromDataReader(dataReader);
 
-            return columnInformationModels.ToList();
-        }
+            await dataReader.NextResultAsync();
 
-        public async Task<IList<FKConstraintInformation>> GetFKConstraintInformation(string connectionString)
-        {
-            using var connection = new SqlConnection(connectionString);
+            var foreignKeyInformation = await FKConstraintInformation.FromDataReader(dataReader);
 
-            var command = new SqlCommand(StoredProcedureExtensions.GetFKConstraintInformation(), connection)
+            await dataReader.NextResultAsync();
+
+            var extendedPropertyInformation = await ExtendedPropertyInformation.FromDataReader(dataReader);
+
+            return new DatabaseInformation
             {
-                CommandType = CommandType.Text
+                Columns = columnInformation.ToList(),
+                ForeignKeys = foreignKeyInformation.ToList(),
+                ExtendedProperties = extendedPropertyInformation.ToList()
             };
-
-            connection.Open();
-
-            using var dataReader = await command.ExecuteReaderAsync();
-
-            var fkConstraintModels = await FKConstraintInformation.FromDataReader(dataReader);
-
-            return fkConstraintModels.ToList();
-        }
-
-        public async Task<IList<ExtendedPropertyInformation>> GetExtendedProperties(string connectionString)
-        {
-            using var connection = new SqlConnection(connectionString);
-
-            var command = new SqlCommand(StoredProcedureExtensions.GetExtendedProperties(), connection)
-            {
-                CommandType = CommandType.Text
-            };
-
-            connection.Open();
-
-            using var dataReader = await command.ExecuteReaderAsync();
-
-            var extendedProperties = await ExtendedPropertyInformation.FromDataReader(dataReader);
-
-            return extendedProperties.ToList();
         }
     }
 }

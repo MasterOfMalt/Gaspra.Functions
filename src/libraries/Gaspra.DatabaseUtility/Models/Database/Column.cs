@@ -54,8 +54,8 @@ namespace Gaspra.DatabaseUtility.Models.Database
 
         public static IList<Column> From(
             string tableName,
-            IList<ColumnInformation> columnInformation,
-            IList<FKConstraintInformation> foreignKeyInformation)
+            IReadOnlyCollection<ColumnInformation> columnInformation,
+            IReadOnlyCollection<FKConstraintInformation> foreignKeyInformation)
         {
             var columns = columnInformation
                 .Where(c => c.TableName.Equals(tableName))
