@@ -58,25 +58,25 @@ namespace Gaspra.DatabaseUtility.Models.Database
             IReadOnlyCollection<FKConstraintInformation> foreignKeyInformation)
         {
             var columns = columnInformation
-                .Where(c => c.TableName.Equals(tableName))
+                .Where(c => c.Table.Equals(tableName))
                 .Select(c =>
                 {
                     var columnsForeignKey = foreignKeyInformation
-                        .Where(f => (f.ConstraintTableColumn.Equals(c.ColumnName) && f.ConstraintTableName.Equals(tableName)) ||
-                                    (f.ReferencedTableColumn.Equals(c.ColumnName) && f.ReferencedTableName.Equals(tableName)))
+                        .Where(f => (f.ConstraintColumn.Equals(c.Column) && f.ConstraintTable.Equals(tableName)) ||
+                                    (f.ReferencedColumn.Equals(c.Column) && f.ReferencedTable.Equals(tableName)))
                         .FirstOrDefault();
 
                     ForeignKeyConstraint foreignKey = null;
 
-                    if(foreignKeyInformation.Any(f => f.ConstraintTableName.Equals(tableName) || f.ReferencedTableName.Equals(tableName)))
+                    if(foreignKeyInformation.Any(f => f.ConstraintTable.Equals(tableName) || f.ReferencedTable.Equals(tableName)))
                     {
                         var parentOf = foreignKeyInformation
-                            .Where(f => f.ConstraintTableName.Equals(tableName) && f.ConstraintTableColumn.Equals(c.ColumnName))
-                            .Select(f => f.ReferencedTableName);
+                            .Where(f => f.ConstraintTable.Equals(tableName) && f.ConstraintColumn.Equals(c.Column))
+                            .Select(f => f.ReferencedTable);
 
                         var childOf = foreignKeyInformation
-                            .Where(f => f.ReferencedTableName.Equals(tableName) && f.ReferencedTableColumn.Equals(c.ColumnName))
-                            .Select(f => f.ConstraintTableName);
+                            .Where(f => f.ReferencedTable.Equals(tableName) && f.ReferencedColumn.Equals(c.Column))
+                            .Select(f => f.ConstraintTable);
 
                         foreignKey = new ForeignKeyConstraint(Guid.NewGuid(), childOf, parentOf);
                     }
@@ -94,9 +94,9 @@ namespace Gaspra.DatabaseUtility.Models.Database
                     return new Column(
                         Guid.NewGuid(),
                         c.ColumnId,
-                        c.ColumnName,
+                        c.Column,
                         c.Nullable,
-                        c.IdentityColumn,
+                        c.Identity,
                         c.DataType,
                         maxLength,
                         c.Precision,

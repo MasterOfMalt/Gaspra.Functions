@@ -7,21 +7,21 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 {
     public class ExtendedPropertyInformation
     {
-        public string SchemaName { get; set; }
-        public string ObjectName { get; set; }
-        public string PropertyName { get; set; }
-        public string Value { get; set; }
+        public string PropertySchema { get; set; }
+        public string PropertyTable { get; set; }
+        public string PropertyKey { get; set; }
+        public string PropertyValue { get; set; }
 
         public ExtendedPropertyInformation(
-            string schemaName,
-            string objectName,
-            string propertyName,
-            string value)
+            string propertySchema,
+            string propertyTable,
+            string propertyKey,
+            string propertyValue)
         {
-            SchemaName = schemaName;
-            ObjectName = objectName;
-            PropertyName = propertyName;
-            Value = value;
+            PropertySchema = propertySchema;
+            PropertyTable = propertyTable;
+            PropertyKey = propertyKey;
+            PropertyValue = propertyValue;
         }
 
         public static async Task<IEnumerable<ExtendedPropertyInformation>> FromDataReader(SqlDataReader dataReader)
@@ -30,16 +30,16 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 
             while (await dataReader.ReadAsync())
             {
-                var schemaName = dataReader[nameof(SchemaName)].GetValue<string>();
-                var objectName = dataReader[nameof(ObjectName)].GetValue<string>();
-                var propertyName = dataReader[nameof(PropertyName)].GetValue<string>();
-                var value = dataReader[nameof(Value)].GetValue<string>();
+                var propertySchema = dataReader[nameof(PropertySchema)].GetValue<string>();
+                var propertyTable = dataReader[nameof(PropertyTable)].GetValue<string>();
+                var propertyKey = dataReader[nameof(PropertyKey)].GetValue<string>();
+                var propertyValue = dataReader[nameof(PropertyValue)].GetValue<string>();
 
                 extendedProperties.Add(new ExtendedPropertyInformation(
-                    schemaName,
-                    objectName,
-                    propertyName,
-                    value));
+                    propertySchema,
+                    propertyTable,
+                    propertyKey,
+                    propertyValue));
             }
 
             return extendedProperties;

@@ -7,30 +7,27 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 {
     public class FKConstraintInformation
     {
+        public string ConstraintSchema { get; set; }
         public string ConstraintName { get; set; }
-        public string ConstraintTableSchema { get; set; }
-        public string ConstraintTableName { get; set; }
-        public string ConstraintTableColumn { get; set; }
-        public string ReferencedTableSchema { get; set; }
-        public string ReferencedTableName { get; set; }
-        public string ReferencedTableColumn { get; set; }
+        public string ConstraintTable { get; set; }
+        public string ConstraintColumn { get; set; }
+        public string ReferencedTable { get; set; }
+        public string ReferencedColumn { get; set; }
 
         public FKConstraintInformation(
+            string constraintSchema,
             string constraintName,
-            string constraintTableSchema,
-            string constraintTableName,
-            string constraintTableColumn,
-            string referencedTableSchema,
-            string referencedTableName,
-            string referencedTableColumn)
+            string constraintTable,
+            string constraintColumn,
+            string referencedTable,
+            string referencedColumn)
         {
+            ConstraintSchema = constraintSchema;
             ConstraintName = constraintName;
-            ConstraintTableSchema = constraintTableSchema;
-            ConstraintTableName = constraintTableName;
-            ConstraintTableColumn = constraintTableColumn;
-            ReferencedTableSchema = referencedTableSchema;
-            ReferencedTableName = referencedTableName;
-            ReferencedTableColumn = referencedTableColumn;
+            ConstraintTable = constraintTable;
+            ConstraintColumn = constraintColumn;
+            ReferencedTable = referencedTable;
+            ReferencedColumn = referencedColumn;
         }
 
         public static async Task<IEnumerable<FKConstraintInformation>> FromDataReader(SqlDataReader dataReader)
@@ -39,22 +36,20 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 
             while (await dataReader.ReadAsync())
             {
+                var constraintSchema = dataReader[nameof(ConstraintSchema)].GetValue<string>();
                 var constraintName = dataReader[nameof(ConstraintName)].GetValue<string>();
-                var constraintTableSchema = dataReader[nameof(ConstraintTableSchema)].GetValue<string>();
-                var constraintTableName = dataReader[nameof(ConstraintTableName)].GetValue<string>();
-                var constraintTableColumn = dataReader[nameof(ConstraintTableColumn)].GetValue<string>();
-                var referencedTableSchema = dataReader[nameof(ReferencedTableSchema)].GetValue<string>();
-                var referencedTableName = dataReader[nameof(ReferencedTableName)].GetValue<string>();
-                var referencedColumnName = dataReader[nameof(ConstraintTableColumn)].GetValue<string>(); //todo
+                var constraintTable = dataReader[nameof(ConstraintTable)].GetValue<string>();
+                var constraintColumn = dataReader[nameof(ConstraintColumn)].GetValue<string>();
+                var referencedTable = dataReader[nameof(ReferencedTable)].GetValue<string>();
+                var referencedColumn = dataReader[nameof(ReferencedColumn)].GetValue<string>();
 
                 fkConstraints.Add(new FKConstraintInformation(
+                    constraintSchema,
                     constraintName,
-                    constraintTableSchema,
-                    constraintTableName,
-                    constraintTableColumn,
-                    referencedTableSchema,
-                    referencedTableName,
-                    referencedColumnName));
+                    constraintTable,
+                    constraintColumn,
+                    referencedTable,
+                    referencedColumn));
             }
 
             return fkConstraints;

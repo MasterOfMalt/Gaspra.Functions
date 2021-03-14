@@ -8,11 +8,11 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
     public class ColumnInformation
     {
         public string TableSchema { get; set; }
-        public string TableName { get; set; }
-        public string ColumnName { get; set; }
+        public string Table { get; set; }
+        public string Column { get; set; }
         public int ColumnId { get; set; }
         public bool Nullable { get; set; }
-        public bool IdentityColumn { get; set; }
+        public bool Identity { get; set; }
         public string DataType { get; set; }
         public int? MaxLength { get; set; }
         public int? Precision { get; set; }
@@ -23,11 +23,11 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 
         public ColumnInformation(
             string tableSchema,
-            string tableName,
-            string columnName,
+            string table,
+            string column,
             int columnId,
             bool nullable,
-            bool identityColumn,
+            bool identity,
             string dataType,
             int? maxLength,
             int? precision,
@@ -37,11 +37,11 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
             string defaultValue)
         {
             TableSchema = tableSchema;
-            TableName = tableName;
-            ColumnName = columnName;
+            Table = table;
+            Column = column;
             ColumnId = columnId;
             Nullable = nullable;
-            IdentityColumn = identityColumn;
+            Identity = identity;
             DataType = dataType;
             MaxLength = maxLength;
             Precision = precision;
@@ -58,11 +58,11 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
             while (await dataReader.ReadAsync())
             {
                 var tableSchema = dataReader[nameof(TableSchema)].GetValue<string>();
-                var tableName = dataReader[nameof(TableName)].GetValue<string>();
-                var columnName = dataReader[nameof(ColumnName)].GetValue<string>();
+                var table = dataReader[nameof(Table)].GetValue<string>();
+                var column = dataReader[nameof(Column)].GetValue<string>();
                 var columnId = dataReader[nameof(ColumnId)].GetValue<int>();
                 var nullable = dataReader[nameof(Nullable)].GetValue<bool>();
-                var identityColumn = dataReader[nameof(IdentityColumn)].GetValue<bool>();
+                var identity = dataReader[nameof(Identity)].GetValue<bool>();
                 var dataType = dataReader[nameof(DataType)].GetValue<string>();
                 var maxLength = dataReader[nameof(MaxLength)].GetValue<int?>();
                 var precision = dataReader[nameof(Precision)].GetValue<int?>();
@@ -73,11 +73,11 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
 
                 columns.Add(new ColumnInformation(
                     tableSchema,
-                    tableName,
-                    columnName,
+                    table,
+                    column,
                     columnId,
                     nullable,
-                    identityColumn,
+                    identity,
                     dataType,
                     maxLength,
                     precision,
@@ -95,12 +95,12 @@ namespace Gaspra.DatabaseUtility.Models.DataAccess
     {
         public bool Equals(ColumnInformation x, ColumnInformation y)
         {
-            return x.TableName.Equals(y.TableName);
+            return x.Table.Equals(y.Table);
         }
 
         public int GetHashCode(ColumnInformation obj)
         {
-            return obj.TableName.GetHashCode();
+            return obj.Table.GetHashCode();
         }
     }
 

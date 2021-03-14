@@ -133,7 +133,7 @@ DECLARE @ExtendedPropertyInformation TABLE
     [PropertySchema] [NVARCHAR](255) NOT NULL,
     [PropertyTable] [NVARCHAR](255) NOT NULL,
     [PropertyKey] [NVARCHAR](255) NOT NULL,
-    [PropertyValue] [SQL_VARIANT] NOT NULL
+    [PropertyValue] [NVARCHAR](255) NOT NULL
 )
 
 INSERT INTO
@@ -142,7 +142,7 @@ SELECT
 	SCHEMA_NAME(o.schema_id) AS PropertySchema,
 	o.name AS PropertyTable,
 	e.name AS PropertyKey,
-	value AS PropertyValue
+	CAST(value AS NVARCHAR(255)) AS PropertyValue
 FROM
 	[sys].[extended_properties] AS e
     INNER JOIN [sys].[objects] AS o ON e.major_id=o.object_id
@@ -182,6 +182,7 @@ SELECT
     [PropertyValue]
 FROM
     @ExtendedPropertyInformation
+
 ";
         }
     }

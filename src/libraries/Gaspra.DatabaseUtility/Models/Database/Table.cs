@@ -41,16 +41,16 @@ namespace Gaspra.DatabaseUtility.Models.Database
                 .Select(c =>
                 {
                     var extendedProperties = extendedPropertyInformation
-                        .Where(e => e.ObjectName.Equals(c.TableName))
+                        .Where(e => e.PropertyTable.Equals(c.Table))
                         .Select(e => new ExtendedProperty(
-                                Guid.NewGuid(), e.PropertyName, e.Value
+                                Guid.NewGuid(), e.PropertyKey, e.PropertyValue
                             ))
                         .ToList();
 
                     return new Table(
                             Guid.NewGuid(),
-                            c.TableName,
-                            Column.From(c.TableName, columnInformation, foreignKeyConstraintInformation),
+                            c.Table,
+                            Column.From(c.Table, columnInformation, foreignKeyConstraintInformation),
                             extendedProperties
                         );
                 })
