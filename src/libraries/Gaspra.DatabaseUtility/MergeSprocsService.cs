@@ -1,4 +1,5 @@
-﻿using Gaspra.DatabaseUtility.Extensions;
+﻿using Gaspra.Database.Interfaces;
+using Gaspra.DatabaseUtility.Extensions;
 using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Models;
 using Gaspra.DatabaseUtility.Models.Database;
@@ -16,18 +17,21 @@ namespace Gaspra.DatabaseUtility
     public class MergeSprocsService : IMergeSprocsService
     {
         private readonly ILogger logger;
-        private readonly IDataAccess dataAccess;
 
+        private readonly IDatabaseStructure _databaseStructure;
+        private readonly Database.Interfaces.IDataAccess _dataAccess;
         private readonly IScriptFactory _scriptFactory;
 
         public MergeSprocsService(
             ILogger<MergeSprocsService> logger,
-            IDataAccess dataAccess,
-            IScriptFactory scriptFactory)
+            Database.Interfaces.IDataAccess dataAccess,
+            IScriptFactory scriptFactory,
+            IDatabaseStructure databaseStructure)
         {
             this.logger = logger;
-            this.dataAccess = dataAccess;
 
+            _databaseStructure = databaseStructure;
+            _dataAccess = dataAccess;
             _scriptFactory = scriptFactory;
         }
 
@@ -41,25 +45,36 @@ namespace Gaspra.DatabaseUtility
              */
             try
             {
-                var databaseInformation = await dataAccess.GetDatabaseInformation(connectionString);
+                var databaseResult = await _dataAccess.GetDatabase(connectionString);
 
-                var columnInfo = databaseInformation.Columns;
+                var database = await _databaseStructure.CalculateStructure(databaseResult);
 
-                var fkInfo = databaseInformation.ForeignKeys;
 
-                var extendedProps = databaseInformation.ExtendedProperties;
 
-                databaseSchema = Schema
-                    .From(columnInfo, extendedProps, fkInfo)
-                    .Where(s => s.Name.Equals(schemaName))
-                    .FirstOrDefault();
 
-                databaseSchema
-                    .CalculateDependencies();
 
-                logger.LogInformation("Read schema information for [{schemaName}] with [{tableCount}] tables",
-                    schemaName,
-                    databaseSchema.Tables.Count());
+
+
+
+    //            var databaseInformation = await _dataAccess.GetDatabaseInformation(connectionString);
+    //
+    //            var columnInfo = databaseInformation.Columns;
+    //
+    //            var fkInfo = databaseInformation.ForeignKeys;
+    //
+    //            var extendedProps = databaseInformation.ExtendedProperties;
+    //
+    //            databaseSchema = Schema
+    //                .From(columnInfo, extendedProps, fkInfo)
+    //                .Where(s => s.Name.Equals(schemaName))
+    //                .FirstOrDefault();
+    //
+    //            databaseSchema
+    //                .CalculateDependencies();
+    //
+    //            logger.LogInformation("Read schema information for [{schemaName}] with [{tableCount}] tables",
+    //                schemaName,
+    //                databaseSchema.Tables.Count());
             }
             catch (Exception ex)
             {
@@ -69,45 +84,45 @@ namespace Gaspra.DatabaseUtility
                     ex.Message);
             }
 
-            /*
-             * calculate dependency tree and build data structure
-             */
-            var dependencyTree = DependencyTree.Calculate(databaseSchema);
+    //        //
+    //        //calculate dependency tree and build data structure
+    //        //
+    //        var dependencyTree = DependencyTree.Calculate(databaseSchema);
+    //
+    //        var dataStructure = new DataStructure(databaseSchema, dependencyTree);
+    //
+    //        logger.LogInformation("Calculated dependency tree with [{branchCount}] branches",
+    //            dependencyTree.Branches.Count());
+    //
+    //        //
+    //        //build up merge variables
+    //        //
+    //        var (mergeVariables, errornousTables) = MergeVariables.From(dataStructure);
+    //
+    //        if (errornousTables.Any())
+    //        {
+    //            logger.LogError("Tables that won't generate merge sprocs: [{tables}], due to exceptions: [{exceptions}]",
+    //                dataStructure.Schema.Tables.Select(t => t.Name).Except(mergeVariables.Select(m => m.Table.Name)),
+    //                errornousTables);
+    //        }
+    //
+    //        logger.LogInformation("Calculated [{mergeVariableCount}] merge variables",
+    //            mergeVariables.Count());
 
-            var dataStructure = new DataStructure(databaseSchema, dependencyTree);
-
-            logger.LogInformation("Calculated dependency tree with [{branchCount}] branches",
-                dependencyTree.Branches.Count());
-
-            /*
-             * build up merge variables
-             */
-            var (mergeVariables, errornousTables) = MergeVariables.From(dataStructure);
-
-            if (errornousTables.Any())
-            {
-                logger.LogError("Tables that won't generate merge sprocs: [{tables}], due to exceptions: [{exceptions}]",
-                    dataStructure.Schema.Tables.Select(t => t.Name).Except(mergeVariables.Select(m => m.Table.Name)),
-                    errornousTables);
-            }
-
-            logger.LogInformation("Calculated [{mergeVariableCount}] merge variables",
-                mergeVariables.Count());
-
-            /*
-             * Create merge statements
-             */
+            //
+            //Create merge statements
+            //
             var mergeStatements = new List<MergeStatement>();
 
-            foreach (var mergeVariable in mergeVariables)
-            {
-                var script = await _scriptFactory.ScriptFrom(mergeVariable);
-
-                mergeStatements.Add(new MergeStatement(script, mergeVariable));
-            }
-
-            logger.LogInformation("Built [{mergeStatementCount}] merge statements",
-                mergeStatements.Count());
+            //foreach (var mergeVariable in mergeVariables)
+            //{
+            //    var script = await _scriptFactory.ScriptFrom(mergeVariable);
+            //
+            //    mergeStatements.Add(new MergeStatement(script, mergeVariable));
+            //}
+            //
+            //logger.LogInformation("Built [{mergeStatementCount}] merge statements",
+            //    mergeStatements.Count());
 
             return mergeStatements;
         }

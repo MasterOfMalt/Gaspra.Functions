@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Gaspra.Functions.Correlation\Gaspra.Functions.Correlation.csproj" />
     <ProjectReference Include="..\libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj" />
+    <ProjectReference Include="..\libraries\Gaspra.Database\Gaspra.Database.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\.github\gficon.png">

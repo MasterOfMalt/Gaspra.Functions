@@ -8,7 +8,7 @@
 /* Table Information */
 DECLARE @TableInformation TABLE
 (
-    [TableSchema] [NVARCHAR](255),
+    [Schema] [NVARCHAR](255),
     [Table] [NVARCHAR](255),
     [Column] [NVARCHAR](255),
     [ColumnId] [INT],
@@ -18,15 +18,15 @@ DECLARE @TableInformation TABLE
     [MaxLength] [INT],
     [Precision] [INT],
     [Scale] [INT],
-    [SeedValue] [SQL_VARIANT],
-    [IncrementValue] [SQL_VARIANT],
+    [SeedValue] [NVARCHAR](255),
+    [IncrementValue] [NVARCHAR](255),
     [DefaultValue] [NVARCHAR](255)
 )
 
 ;WITH TableInformation AS (
     SELECT
-	    ist.table_schema AS TableSchema,
-	    so.name AS TableName,
+	    ist.table_schema AS [Schema],
+	    so.name AS [Table],
 	    sc.name AS ColumnName,
         sc.column_id AS ColumnId,
 	    sc.is_nullable AS Nullable,
@@ -60,13 +60,13 @@ DECLARE @TableInformation TABLE
 	                seed_value
                 ELSE
                     NULL
-             END AS SQL_VARIANT) AS SeedValue,
+             END AS NVARCHAR(255)) AS SeedValue,
 	    CAST(CASE
                 WHEN sc.is_identity=1 THEN
 	                increment_value
                 ELSE
                     NULL
-             END AS SQL_VARIANT) AS IncrementValue,
+             END AS NVARCHAR(255)) AS IncrementValue,
 	    CAST(CASE
                 WHEN sc.default_object_id>0 THEN
 	                definition
@@ -87,8 +87,8 @@ DECLARE @TableInformation TABLE
 INSERT INTO
     @TableInformation
 SELECT
-    ti.TableSchema,
-    ti.TableName,
+    ti.[Schema],
+    ti.[Table],
     ti.ColumnName,
     ti.ColumnId,
     ti.Nullable,
@@ -130,26 +130,26 @@ FROM
 /* Extended properties */
 DECLARE @ExtendedPropertyInformation TABLE
 (
-    [PropertySchema] [NVARCHAR](255) NOT NULL,
-    [PropertyTable] [NVARCHAR](255) NOT NULL,
-    [PropertyKey] [NVARCHAR](255) NOT NULL,
-    [PropertyValue] [NVARCHAR](255) NOT NULL
+    [Schema] [NVARCHAR](255) NOT NULL,
+    [Table] [NVARCHAR](255) NOT NULL,
+    [Key] [NVARCHAR](255) NOT NULL,
+    [Value] [NVARCHAR](255) NOT NULL
 )
 
 INSERT INTO
     @ExtendedPropertyInformation
 SELECT
-	SCHEMA_NAME(o.schema_id) AS PropertySchema,
-	o.name AS PropertyTable,
-	e.name AS PropertyKey,
-	CAST(value AS NVARCHAR(255)) AS PropertyValue
+	SCHEMA_NAME(o.schema_id) AS [Schema],
+	o.name AS [Table],
+	e.name AS [Key],
+	CAST(value AS NVARCHAR(255)) AS [Value]
 FROM
 	[sys].[extended_properties] AS e
     INNER JOIN [sys].[objects] AS o ON e.major_id=o.object_id
 
 /* Select */
 SELECT
-    [TableSchema],
+    [Schema],
     [Table],
     [Column],
     [ColumnId],
@@ -176,10 +176,10 @@ FROM
     @ConstraintInformation
 
 SELECT
-    [PropertySchema],
-    [PropertyTable],
-    [PropertyKey],
-    [PropertyValue]
+    [Schema],
+    [Table],
+    [Key],
+    [Value]
 FROM
     @ExtendedPropertyInformation
 

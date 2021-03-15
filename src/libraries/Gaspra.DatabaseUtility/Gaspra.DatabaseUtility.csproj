@@ -4,4 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <Import Project="..\..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\Gaspra.Database\Gaspra.Database.csproj" />
+  </ItemGroup>
 </Project>

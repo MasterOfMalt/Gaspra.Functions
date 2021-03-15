@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Gaspra.Database.Interfaces;
 
 namespace Gaspra.Database.Models
 {
-    public class ConstraintModel
+    public class ConstraintModel : CorrelatedModel
     {
+        public string Name { get; set; }
+        public bool Parent { get; set; }
+        public ColumnModel Reference { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using Gaspra.Database.Interfaces;
 using Gaspra.Database.Models.QueryResults;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Gaspra.Database.Services
@@ -22,19 +23,19 @@ namespace Gaspra.Database.Services
 
             using var dataReader = await command.ExecuteReaderAsync();
 
-            var columns = dataReader.ReadColums();
+            var tables = await dataReader.ReadTables();
 
             await dataReader.NextResultAsync();
 
-            var constraints = dataReader.ReadConstraints();
+            var constraints = await dataReader.ReadConstraints();
 
             await dataReader.NextResultAsync();
 
-            var properties = dataReader.ReadProperties();
+            var properties = await dataReader.ReadProperties();
 
             return new DatabaseResult
             {
-                Columns = columns,
+                Tables = tables,
                 Constraints = constraints,
                 Properties = properties
             };
