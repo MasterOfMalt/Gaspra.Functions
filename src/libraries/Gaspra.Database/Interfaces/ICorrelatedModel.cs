@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Gaspra.Database.Interfaces
 {
@@ -41,6 +42,27 @@ namespace Gaspra.Database.Interfaces
         public static bool operator !=(CorrelatedModel left, CorrelatedModel right)
         {
             return !(left == right);
+        }
+    }
+
+    public class CorrelatedModelComparison : IEqualityComparer<ICorrelatedModel>
+    {
+        public static IEqualityComparer<ICorrelatedModel> Instance { get; } = new CorrelatedModelComparison();
+
+        private CorrelatedModelComparison() { }
+
+        public bool Equals([AllowNull] ICorrelatedModel x, [AllowNull] ICorrelatedModel y)
+        {
+            if (x == null || y == null)
+            {
+                return false;
+            }
+            return x.CorrelationId.Equals(y.CorrelationId);
+        }
+
+        public int GetHashCode([DisallowNull] ICorrelatedModel obj)
+        {
+            return HashCode.Combine(obj.CorrelationId);
         }
     }
 }
