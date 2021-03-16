@@ -33,6 +33,8 @@ namespace Gaspra.Database.Extensions
         /// <param name="dependant"></param>
         public static void AddDependantTable(this TableModel table, TableModel dependant)
         {
+            if (table == null) return;
+
             var dependants = table.DependantTables ?? new List<TableModel>();
 
             dependants.Add(dependant);
@@ -47,6 +49,8 @@ namespace Gaspra.Database.Extensions
         /// <param name="reference"></param>
         public static void AddReferenceTable(this TableModel table, TableModel reference)
         {
+            if (table == null) return;
+
             var references = table.ReferenceTables ?? new List<TableModel>();
 
             references.Add(reference);
@@ -102,12 +106,12 @@ namespace Gaspra.Database.Extensions
         {
             var referenceTables = table
                 .ReferenceTables?
-                .Where(t => !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
+                .Where(t => t != null && !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
                 .ToList() ?? new List<TableModel>();
 
             var dependantTables = table
                 .DependantTables?
-                .Where(t => !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
+                .Where(t => t != null && !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
                 .ToList() ?? new List<TableModel>();
 
             var tables = referenceTables;
@@ -132,7 +136,7 @@ namespace Gaspra.Database.Extensions
         {
             var isLink = false;
 
-            if (table.Depth.Equals(-1))
+            if (table != null && table.Depth.Equals(-1))
             {
                 var allColumnsAreConstraints = table
                     .Columns

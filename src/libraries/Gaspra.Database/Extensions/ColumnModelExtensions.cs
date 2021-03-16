@@ -13,12 +13,15 @@ namespace Gaspra.Database.Extensions
                 Parent = true
             };
 
-            reference.Constraint = new ConstraintModel
+            if (reference != null)
             {
-                Name = constraintName,
-                Reference = column,
-                Parent = false
-            };
+                reference.Constraint = new ConstraintModel
+                {
+                    Name = constraintName,
+                    Reference = column,
+                    Parent = false
+                };
+            }
         }
     }
 }

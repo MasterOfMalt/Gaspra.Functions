@@ -54,7 +54,7 @@ namespace Gaspra.Database.Services
                     .Where(t => t.Name.Equals(constraint.ConstraintTable))
                     .FirstOrDefault();
 
-                var constraintColumn = constraintTable
+                var constraintColumn = constraintTable?
                     .Columns
                     .Where(c => c.Name.Equals(constraint.ConstraintColumn))
                     .FirstOrDefault();
@@ -66,7 +66,7 @@ namespace Gaspra.Database.Services
                     .Where(t => t.Name.Equals(constraint.ReferencedTable))
                     .FirstOrDefault();
 
-                var referenceColumn = referenceTable
+                var referenceColumn = referenceTable?
                     .Columns
                     .Where(c => c.Name.Equals(constraint.ReferencedColumn))
                     .FirstOrDefault();
@@ -109,7 +109,7 @@ namespace Gaspra.Database.Services
             //debug
             var depths = databaseModel
                 .Schemas
-                .Where(s => s.Name.Equals("Analytics"))
+                .Where(s => s.Name.Equals("dbo"))
                 .SelectMany(s => s.Tables)
                 .Select(t => new
                 {
