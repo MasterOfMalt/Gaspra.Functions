@@ -2,7 +2,6 @@
 using Gaspra.Database.Interfaces;
 using Gaspra.Database.Models;
 using Gaspra.Database.Models.QueryResults;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -105,87 +104,23 @@ namespace Gaspra.Database.Services
             };
 
             // Map table depths
-            await CalculateTableDepth(databaseModel);
+            await databaseModel.CalculateTableDepth();
 
-            /*
-                --debug
-                var depths = databaseModel.Schemas.Where(s => s.Name.Equals("Analytics")).SelectMany(s => s.Tables).Select(t => new
+            //debug
+            var depths = databaseModel
+                .Schemas
+                .Where(s => s.Name.Equals("Analytics"))
+                .SelectMany(s => s.Tables)
+                .Select(t => new
                 {
-                    Name = t.Name,
-                    Depth = t.Depth
+                    t.Name,
+                    t.Depth
                 })
                 .OrderBy(o => o.Depth)
                 .ToList();
-            */
 
             // Return model
             return databaseModel;
-        }
-
-        private async Task CalculateTableDepth(DatabaseModel databaseModel)
-        {
-            var depth = 1;
-
-            foreach (var schema in databaseModel.Schemas)
-            {
-                var topTables = schema
-                    .Tables
-                    .Where(t => t.Properties.ContainsKey("FactTable"))
-                    .ToList();
-
-                if(topTables != null && topTables.Any())
-                {
-                    await RecurseTableDepths(topTables, depth);
-                }
-            }
-        }
-
-        private async Task RecurseTableDepths(ICollection<TableModel> tables, int depth)
-        {
-            if (tables != null && tables.Any())
-            {
-                var nextDepth = depth + 1;
-
-                await SetTableDepths(tables, depth);
-
-                foreach (var table in tables)
-                {
-                    await RecurseTableDepths(await GetConnectingTables(table), nextDepth);
-                }
-            }
-        }
-
-        private Task SetTableDepths(ICollection<TableModel> tables, int depth)
-        {
-            foreach (var table in tables)
-            {
-                table.Depth = depth;
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private Task<ICollection<TableModel>> GetConnectingTables(TableModel table)
-        {
-            var referenceTables = table
-                .ReferenceTables?
-                .Where(t => !t.Name.StartsWith("Link") && t.Depth.Equals(-1))
-                .ToList() ?? new List<TableModel>();
-
-            var dependantTables = table
-                .DependantTables?
-                .Where(t => !t.Name.StartsWith("Link") && t.Depth.Equals(-1))
-                .ToList() ?? new List<TableModel>();
-
-            var tables = referenceTables;
-
-            tables.AddRange(dependantTables);
-
-            tables = tables
-                .Distinct(TableModelComparison.Instance)
-                .ToList();
-
-            return Task.FromResult((ICollection<TableModel>)tables);
         }
     }
 }
