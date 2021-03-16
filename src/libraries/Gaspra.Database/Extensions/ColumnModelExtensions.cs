@@ -4,13 +4,20 @@ namespace Gaspra.Database.Extensions
 {
     public static class ColumnModelExtensions
     {
-        public static void AddConstraint(this ColumnModel column, string constraintName, ColumnModel reference, bool isParent)
+        public static void AddConstraint(this ColumnModel column, string constraintName, ColumnModel reference)
         {
             column.Constraint = new ConstraintModel
             {
                 Name = constraintName,
                 Reference = reference,
-                Parent = isParent
+                Parent = true
+            };
+
+            reference.Constraint = new ConstraintModel
+            {
+                Name = constraintName,
+                Reference = column,
+                Parent = false
             };
         }
     }

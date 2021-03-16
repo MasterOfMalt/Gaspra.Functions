@@ -1,4 +1,5 @@
-﻿using Gaspra.Database.Interfaces;
+﻿using Gaspra.Database.Extensions;
+using Gaspra.Database.Interfaces;
 using Gaspra.DatabaseUtility.Extensions;
 using Gaspra.DatabaseUtility.Interfaces;
 using Gaspra.DatabaseUtility.Models;
@@ -47,7 +48,7 @@ namespace Gaspra.DatabaseUtility
             {
                 var databaseResult = await _dataAccess.GetDatabase(connectionString);
 
-                var database = await _databaseStructure.CalculateStructure(databaseResult);
+                var database = await _databaseStructure.CalculateStructure(connectionString.DatabaseName(), databaseResult);
 
 
 

@@ -6,6 +6,6 @@ namespace Gaspra.Database.Interfaces
 {
     public interface IDatabaseStructure
     {
-        Task<DatabaseModel> CalculateStructure(DatabaseResult databaseResult);
+        Task<DatabaseModel> CalculateStructure(string databaseName, DatabaseResult databaseResult);
     }
 }

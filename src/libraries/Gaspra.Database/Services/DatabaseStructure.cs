@@ -2,7 +2,6 @@
 using Gaspra.Database.Interfaces;
 using Gaspra.Database.Models;
 using Gaspra.Database.Models.QueryResults;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,17 +9,15 @@ namespace Gaspra.Database.Services
 {
     public class DatabaseStructure : IDatabaseStructure
     {
-        public async Task<DatabaseModel> CalculateStructure(DatabaseResult databaseResult)
+        public async Task<DatabaseModel> CalculateStructure(string databaseName, DatabaseResult databaseResult)
         {
-            // Build up all the schemas, tables and columns
+            // Create database structure
             var schemaModels = databaseResult
                 .Tables
                 .Select(t => t.Schema)
                 .Distinct()
                 .Select(s => new SchemaModel { Name = s })
                 .ToList();
-
-            var calculatedSchema = new List<SchemaModel>();
 
             foreach (var schema in schemaModels)
             {
@@ -30,7 +27,7 @@ namespace Gaspra.Database.Services
                     .Distinct(TableResultComparison.Instance)
                     .ToList();
 
-                var tableModels = await CreateTables(tableResults);
+                var tableModels = await tableResults.CreateTables();
 
                 foreach (var table in tableModels)
                 {
@@ -39,50 +36,46 @@ namespace Gaspra.Database.Services
                         .Where(t => t.Schema.Equals(schema.Name) && t.Table.Equals(table.Name))
                         .ToList();
 
-                    var columnModels = await CreateColumns(tableColumnResults);
+                    var columnModels = await tableColumnResults.CreateColumns();
 
                     table.Columns = columnModels;
                 }
 
                 schema.Tables = tableModels;
-
-                calculatedSchema.Add(schema);
             }
 
-            // Add constraints to the columns
+            // Add constraints to columns and tables
             foreach (var constraint in databaseResult.Constraints)
             {
-                var constraintTables = schemaModels
+                var constraintTable = schemaModels
                     .Where(s => s.Name.Equals(constraint.ConstraintSchema))
                     .FirstOrDefault()
-                    .Tables;
-
-                var constraintColumns = constraintTables
+                    .Tables
                     .Where(t => t.Name.Equals(constraint.ConstraintTable))
-                    .FirstOrDefault()
-                    .Columns;
+                    .FirstOrDefault();
 
-                var constraintColumn = constraintColumns
+                var constraintColumn = constraintTable
+                    .Columns
                     .Where(c => c.Name.Equals(constraint.ConstraintColumn))
                     .FirstOrDefault();
 
-                var referenceTables = schemaModels
+                var referenceTable = schemaModels
                     .Where(s => s.Name.Equals(constraint.ConstraintSchema))
                     .FirstOrDefault()
-                    .Tables;
-
-                var referenceColumns = referenceTables
+                    .Tables
                     .Where(t => t.Name.Equals(constraint.ReferencedTable))
-                    .FirstOrDefault()
-                    .Columns;
+                    .FirstOrDefault();
 
-                var referenceColumn = referenceColumns
+                var referenceColumn = referenceTable
+                    .Columns
                     .Where(c => c.Name.Equals(constraint.ReferencedColumn))
                     .FirstOrDefault();
 
-                constraintColumn.AddConstraint(constraint.ConstraintName, referenceColumn, true);
+                constraintColumn.AddConstraint(constraint.ConstraintName, referenceColumn);
 
-                referenceColumn.AddConstraint(constraint.ConstraintName, constraintColumn, false);
+                constraintTable.AddDependantTable(referenceTable);
+
+                referenceTable.AddReferenceTable(constraintTable);
             }
 
             // Add properties to the tables
@@ -106,55 +99,11 @@ namespace Gaspra.Database.Services
             // return database model
             var databaseModel = new DatabaseModel
             {
-                Name = "todo",
-                Schemas = calculatedSchema
+                Name = databaseName,
+                Schemas = schemaModels
             };
 
             return databaseModel;
-        }
-
-        private Task<IReadOnlyCollection<TableModel>> CreateTables(IReadOnlyCollection<TableResult> tableResults)
-        {
-            var tables = new List<TableModel>();
-
-            foreach (var tableResult in tableResults)
-            {
-                var tableModel = new TableModel
-                {
-                    Name = tableResult.Table
-                };
-
-                tables.Add(tableModel);
-            }
-
-            return Task.FromResult((IReadOnlyCollection<TableModel>)tables);
-        }
-
-        private Task<IReadOnlyCollection<ColumnModel>> CreateColumns(IReadOnlyCollection<TableResult> tableResults)
-        {
-            var columns = new List<ColumnModel>();
-
-            foreach (var tableResult in tableResults)
-            {
-                var columnModel = new ColumnModel
-                {
-                    Id = tableResult.ColumnId,
-                    Name = tableResult.Column,
-                    Nullable = tableResult.Nullable,
-                    IdentityColumn = tableResult.Identity,
-                    DataType = tableResult.DataType,
-                    MaxLength = tableResult.MaxLength,
-                    Precision = tableResult.Precision,
-                    Scale = tableResult.Scale,
-                    SeedValue = tableResult.SeedValue,
-                    IncrementValue = tableResult.IncrementValue,
-                    DefaultValue = tableResult.DefaultValue
-                };
-
-                columns.Add(columnModel);
-            }
-
-            return Task.FromResult((IReadOnlyCollection<ColumnModel>)columns);
         }
     }
 }
