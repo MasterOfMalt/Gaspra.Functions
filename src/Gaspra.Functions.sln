@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1F0B158-6174-4B04-B4B9-17239906BF21}"
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\publish.yml = ..\.github\workflows\publish.yml
+		..\.gitignore = ..\.gitignore
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{B3104304-E54B-4FC4-991F-63A509B4D4B4}"
