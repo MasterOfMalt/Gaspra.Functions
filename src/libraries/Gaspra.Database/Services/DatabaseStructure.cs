@@ -48,28 +48,22 @@ namespace Gaspra.Database.Services
             foreach (var constraint in databaseResult.Constraints)
             {
                 var constraintTable = schemaModels
-                    .Where(s => s.Name.Equals(constraint.ConstraintSchema))
-                    .FirstOrDefault()
+                    .FirstOrDefault(s => s.Name.Equals(constraint.ConstraintSchema))?
                     .Tables
-                    .Where(t => t.Name.Equals(constraint.ConstraintTable))
-                    .FirstOrDefault();
+                    .FirstOrDefault(t => t.Name.Equals(constraint.ConstraintTable));
 
                 var constraintColumn = constraintTable?
                     .Columns
-                    .Where(c => c.Name.Equals(constraint.ConstraintColumn))
-                    .FirstOrDefault();
+                    .FirstOrDefault(c => c.Name.Equals(constraint.ConstraintColumn));
 
                 var referenceTable = schemaModels
-                    .Where(s => s.Name.Equals(constraint.ConstraintSchema))
-                    .FirstOrDefault()
+                    .FirstOrDefault(s => s.Name.Equals(constraint.ConstraintSchema))?
                     .Tables
-                    .Where(t => t.Name.Equals(constraint.ReferencedTable))
-                    .FirstOrDefault();
+                    .FirstOrDefault(t => t.Name.Equals(constraint.ReferencedTable));
 
                 var referenceColumn = referenceTable?
                     .Columns
-                    .Where(c => c.Name.Equals(constraint.ReferencedColumn))
-                    .FirstOrDefault();
+                    .FirstOrDefault(c => c.Name.Equals(constraint.ReferencedColumn));
 
                 constraintColumn.AddConstraint(constraint.ConstraintName, referenceColumn);
 
@@ -82,13 +76,11 @@ namespace Gaspra.Database.Services
             foreach (var property in databaseResult.Properties)
             {
                 var propertyTables = schemaModels
-                    .Where(s => s.Name.Equals(property.Schema))
-                    .FirstOrDefault()
+                    .FirstOrDefault(s => s.Name.Equals(property.Schema))?
                     .Tables;
 
-                var propertyTable = propertyTables
-                    .Where(t => t.Name.Equals(property.Table))
-                    .FirstOrDefault();
+                var propertyTable = propertyTables?
+                    .FirstOrDefault(t => t.Name.Equals(property.Table));
 
                 if (propertyTable != null)
                 {
