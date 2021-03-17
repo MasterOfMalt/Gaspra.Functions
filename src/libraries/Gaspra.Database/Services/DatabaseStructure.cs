@@ -98,19 +98,6 @@ namespace Gaspra.Database.Services
             // Map table depths
             await databaseModel.CalculateTableDepth();
 
-            //debug
-            var depths = databaseModel
-                .Schemas
-                .Where(s => s.Name.Equals("dbo"))
-                .SelectMany(s => s.Tables)
-                .Select(t => new
-                {
-                    t.Name,
-                    t.Depth
-                })
-                .OrderBy(o => o.Depth)
-                .ToList();
-
             // Return model
             return databaseModel;
         }

@@ -30,6 +30,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.Functions.Correlatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaspra.Database", "libraries\Gaspra.Database\Gaspra.Database.csproj", "{F49AE914-71B3-4001-AAA1-F678E6575CF0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaspra.SqlGenerator", "libraries\Gaspra.SqlGenerator\Gaspra.SqlGenerator.csproj", "{25764D20-46EF-4FE8-B76C-8F0AB53148FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{F49AE914-71B3-4001-AAA1-F678E6575CF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F49AE914-71B3-4001-AAA1-F678E6575CF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F49AE914-71B3-4001-AAA1-F678E6575CF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25764D20-46EF-4FE8-B76C-8F0AB53148FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25764D20-46EF-4FE8-B76C-8F0AB53148FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25764D20-46EF-4FE8-B76C-8F0AB53148FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25764D20-46EF-4FE8-B76C-8F0AB53148FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DEAEDAAE-D712-4087-A16A-9982B1F4A98E} = {86753390-5CA8-4566-A614-1BB994E9D5EA}
 		{F49AE914-71B3-4001-AAA1-F678E6575CF0} = {86753390-5CA8-4566-A614-1BB994E9D5EA}
+		{25764D20-46EF-4FE8-B76C-8F0AB53148FB} = {86753390-5CA8-4566-A614-1BB994E9D5EA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D350D48F-E918-4E4E-9D9B-7C3611C83BD6}

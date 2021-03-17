@@ -1,4 +1,6 @@
-﻿using Gaspra.Database.Extensions;
+﻿using System;
+using System.Collections.Generic;
+using Gaspra.Database.Extensions;
 using Gaspra.Database.Interfaces;
 using Gaspra.Database.Models.QueryResults;
 using System.Data;
@@ -10,9 +12,9 @@ namespace Gaspra.Database.Services
 {
     public class DataAccess : IDataAccess
     {
-        public async Task<DatabaseResult> GetDatabase(string connectionString)
+        public async Task<DatabaseResult> GetDatabase(string connectionString, IReadOnlyCollection<string> schemas)
         {
-            using var connection = new SqlConnection(connectionString);
+            await using var connection = new SqlConnection(connectionString);
 
             var command = new SqlCommand(StoredProcedureExtensions.GetDatabase(), connection)
             {
@@ -21,7 +23,7 @@ namespace Gaspra.Database.Services
 
             connection.Open();
 
-            using var dataReader = await command.ExecuteReaderAsync();
+            await using var dataReader = await command.ExecuteReaderAsync();
 
             var tables = await dataReader.ReadTables();
 
@@ -32,6 +34,24 @@ namespace Gaspra.Database.Services
             await dataReader.NextResultAsync();
 
             var properties = await dataReader.ReadProperties();
+
+            if (schemas != null && schemas.Any())
+            {
+                tables = tables
+                    .Where(t => schemas
+                        .Any(s => s.Equals(t.Schema, StringComparison.InvariantCultureIgnoreCase)))
+                    .ToList();
+
+                constraints = constraints
+                    .Where(c => schemas
+                        .Any(s => s.Equals(c.ConstraintSchema, StringComparison.InvariantCultureIgnoreCase)))
+                    .ToList();
+
+                properties = properties
+                    .Where(p => schemas
+                        .Any(s => s.Equals(p.Schema, StringComparison.InvariantCultureIgnoreCase)))
+                    .ToList();
+            }
 
             return new DatabaseResult
             {

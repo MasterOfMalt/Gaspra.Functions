@@ -80,6 +80,7 @@ namespace Gaspra.Database.Extensions
         /// </summary>
         /// <param name="tables"></param>
         /// <param name="depth"></param>
+        /// <param name="databaseModel"></param>
         /// <returns></returns>
         public static async Task RecurseTableDepths(this ICollection<TableModel> tables, int depth, DatabaseModel databaseModel)
         {
@@ -101,6 +102,7 @@ namespace Gaspra.Database.Extensions
         /// and dependant constraints
         /// </summary>
         /// <param name="table"></param>
+        /// <param name="databaseModel"></param>
         /// <returns></returns>
         public static Task<ICollection<TableModel>> GetConnectingTables(this TableModel table, DatabaseModel databaseModel)
         {
@@ -131,6 +133,7 @@ namespace Gaspra.Database.Extensions
         /// linking other tables together
         /// </summary>
         /// <param name="table"></param>
+        /// <param name="databaseModel"></param>
         /// <returns></returns>
         public static bool IsLinkTable(this TableModel table, DatabaseModel databaseModel)
         {
