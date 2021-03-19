@@ -85,45 +85,45 @@ namespace Gaspra.DatabaseUtility
                     ex.Message);
             }
 
-    //        //
-    //        //calculate dependency tree and build data structure
-    //        //
-    //        var dependencyTree = DependencyTree.Calculate(databaseSchema);
-    //
-    //        var dataStructure = new DataStructure(databaseSchema, dependencyTree);
-    //
-    //        logger.LogInformation("Calculated dependency tree with [{branchCount}] branches",
-    //            dependencyTree.Branches.Count());
-    //
-    //        //
-    //        //build up merge variables
-    //        //
-    //        var (mergeVariables, errornousTables) = MergeVariables.From(dataStructure);
-    //
-    //        if (errornousTables.Any())
-    //        {
-    //            logger.LogError("Tables that won't generate merge sprocs: [{tables}], due to exceptions: [{exceptions}]",
-    //                dataStructure.Schema.Tables.Select(t => t.Name).Except(mergeVariables.Select(m => m.Table.Name)),
-    //                errornousTables);
-    //        }
-    //
-    //        logger.LogInformation("Calculated [{mergeVariableCount}] merge variables",
-    //            mergeVariables.Count());
+            //
+            //calculate dependency tree and build data structure
+            //
+            var dependencyTree = DependencyTree.Calculate(databaseSchema);
+
+            var dataStructure = new DataStructure(databaseSchema, dependencyTree);
+
+            logger.LogInformation("Calculated dependency tree with [{branchCount}] branches",
+                dependencyTree.Branches.Count());
+
+            //
+            //build up merge variables
+            //
+            var (mergeVariables, errornousTables) = MergeVariables.From(dataStructure);
+
+            if (errornousTables.Any())
+            {
+                logger.LogError("Tables that won't generate merge sprocs: [{tables}], due to exceptions: [{exceptions}]",
+                    dataStructure.Schema.Tables.Select(t => t.Name).Except(mergeVariables.Select(m => m.Table.Name)),
+                    errornousTables);
+            }
+
+            logger.LogInformation("Calculated [{mergeVariableCount}] merge variables",
+                mergeVariables.Count());
 
             //
             //Create merge statements
             //
             var mergeStatements = new List<MergeStatement>();
 
-            //foreach (var mergeVariable in mergeVariables)
-            //{
-            //    var script = await _scriptFactory.ScriptFrom(mergeVariable);
-            //
-            //    mergeStatements.Add(new MergeStatement(script, mergeVariable));
-            //}
-            //
-            //logger.LogInformation("Built [{mergeStatementCount}] merge statements",
-            //    mergeStatements.Count());
+            foreach (var mergeVariable in mergeVariables)
+            {
+                var script = await _scriptFactory.ScriptFrom(mergeVariable);
+
+                mergeStatements.Add(new MergeStatement(script, mergeVariable));
+            }
+
+            logger.LogInformation("Built [{mergeStatementCount}] merge statements",
+                mergeStatements.Count());
 
             return mergeStatements;
         }
