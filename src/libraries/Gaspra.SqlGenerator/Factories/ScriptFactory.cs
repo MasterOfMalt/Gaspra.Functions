@@ -18,7 +18,7 @@ namespace Gaspra.SqlGenerator.Factories
                 .OrderSections();
         }
 
-        public async Task<string> ScriptFrom(IScriptVariableSet scriptVariableSet)
+        public async Task<string> ScriptFrom(IMergeScriptVariableSet scriptVariableSet)
         {
             var script = "";
 

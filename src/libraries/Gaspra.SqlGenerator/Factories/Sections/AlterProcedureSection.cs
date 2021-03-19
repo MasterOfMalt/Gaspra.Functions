@@ -8,26 +8,26 @@ namespace Gaspra.SqlGenerator.Factories.Sections
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 0, 4 });
+        public ScriptOrder Order { get; } = new(new[] { 0, 4 });
 
         public AlterProcedureSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
-        public Task<bool> Valid(IScriptVariableSet variables)
+        public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
             return Task.FromResult(
-                !string.IsNullOrWhiteSpace(variables.SchemaName) &&
-                !string.IsNullOrWhiteSpace(variables.TableTypeName()));
+                !string.IsNullOrWhiteSpace(variableSet.Schema.Name) &&
+                !string.IsNullOrWhiteSpace(variableSet.TableTypeName));
         }
 
-        public async Task<string> Value(IScriptVariableSet variables)
+        public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 0,
-                $"ALTER PROCEDURE [{variables.SchemaName}].[{variables.ProcedureName()}]",
-                $"    @{variables.TableTypeVariableName()} [{variables.SchemaName}].[{variables.TableTypeName()}] READONLY",
+                $"ALTER PROCEDURE [{variableSet.Schema.Name}].[{variableSet.ScriptName}]",
+                $"    @{variableSet.TableTypeVariableName} [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] READONLY",
                 "AS",
                 "BEGIN",
                 "",

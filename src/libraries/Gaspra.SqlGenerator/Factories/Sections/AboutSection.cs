@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Gaspra.SqlGenerator.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
@@ -19,37 +20,37 @@ namespace Gaspra.SqlGenerator.Factories.Sections
             _scriptLineFactory = scriptLineFactory;
         }
 
-        public Task<bool> Valid(IScriptVariableSet variables)
+        public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
             return Task.FromResult(true);
         }
 
-        public async Task<string> Value(IScriptVariableSet variables)
+        public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
+            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
 
-            var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
+            var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
 
             var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
 
             var inserts = true;
 
-            var updates = !matchOn.Count().Equals(variables.Table.Columns.Count) &&
-                !variables.Table.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
+            var updates = !matchOn.Count().Equals(variableSet.Table.Columns.Count) &&
+                !variableSet.Table.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
 
             var deletes = !string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any();
 
-            var retention = variables.RetentionPolicy != null;
+            var retention = !string.IsNullOrWhiteSpace(variableSet.RetentionPolicy.ComparisonColumn);
 
-            var retentionAmount = retention ? $"({variables.RetentionPolicy.RetentionMonths} months)" : "";
+            var retentionAmount = retention ? $"({variableSet.RetentionPolicy.RetentionMonths} months)" : "";
 
             var tableTypeFields = new List<string>();
 
-            foreach (var column in variables.TableTypeColumns.OrderBy(c => c.Name))
+            foreach (var column in variableSet.TableTypeColumns.OrderBy(c => c.Name))
             {
-                var columnDescription = $" **         [{column.Name}] {DataType(column)} {NullableColumn(column)}";
+                var columnDescription = $" **         [{column.Name}] {column.DataType()} {column.NullableColumn()}";
 
-                if (column != variables.TableTypeColumns.OrderBy(c => c.Name).Last())
+                if (column != variableSet.TableTypeColumns.OrderBy(c => c.Name).Last())
                 {
                     columnDescription += ",";
                 }
@@ -59,11 +60,11 @@ namespace Gaspra.SqlGenerator.Factories.Sections
 
             var dependantTables = new List<string>();
 
-            foreach (var dependantTable in variables.TablesToJoin)
+            foreach (var dependantTable in variableSet.TablesToJoin)
             {
-                var table = $" **     [{variables.SchemaName}].[{dependantTable.joinTable.Name}]";
+                var table = $" **     [{variableSet.Schema.Name}].[{dependantTable.joinTable.Name}]";
 
-                if(dependantTable != variables.TablesToJoin.Last())
+                if(dependantTable != variableSet.TablesToJoin.Last())
                 {
                     table += ",";
                 }
@@ -73,10 +74,10 @@ namespace Gaspra.SqlGenerator.Factories.Sections
 
             var aboutText = new List<string>
             {
-                $" ** [{variables.SchemaName}].[{variables.ProcedureName()}]",
+                $" ** [{variableSet.Schema.Name}].[{variableSet.ScriptName}]",
                 $" **",
-                $" ** Expects table type parameter: @{variables.TableTypeVariableName()} as",
-                $" **     [{variables.SchemaName}].[{variables.TableTypeName()}] ("
+                $" ** Expects table type parameter: @{variableSet.TableTypeVariableName} as",
+                $" **     [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] ("
             };
 
             aboutText.AddRange(tableTypeFields);
@@ -86,7 +87,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 $" **     )",
                 $" **",
                 $" ** Merges data into table:",
-                $" **     [{variables.SchemaName}].[{variables.Table.Name}]"
+                $" **     [{variableSet.Schema.Name}].[{variableSet.Table.Name}]"
             });
 
             if(dependantTables.Any())
@@ -143,27 +144,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 aboutLines.ToArray());
 
             return await _scriptLineFactory.StringFrom(scriptLines);
-        }
-
-        private static string DataType(Column column)
-        {
-            var dataType = $"[{column.DataType}]";
-
-            if (column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
-            {
-                dataType += $"({column.Precision.Value},{column.Scale.Value})";
-            }
-            else if (column.MaxLength.HasValue)
-            {
-                dataType += $"({column.MaxLength.Value})";
-            }
-
-            return dataType;
-        }
-
-        private static string NullableColumn(Column column)
-        {
-            return column.Nullable ? "NULL" : "NOT NULL";
         }
     }
 }

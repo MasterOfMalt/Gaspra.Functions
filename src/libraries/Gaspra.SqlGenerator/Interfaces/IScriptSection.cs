@@ -6,7 +6,7 @@ namespace Gaspra.SqlGenerator.Interfaces
     public interface IScriptSection
     {
         ScriptOrder Order { get; }
-        Task<bool> Valid(IScriptVariableSet variables);
-        Task<string> Value(IScriptVariableSet variables);
+        Task<bool> Valid(IMergeScriptVariableSet variableSet);
+        Task<string> Value(IMergeScriptVariableSet variableSet);
     }
 }

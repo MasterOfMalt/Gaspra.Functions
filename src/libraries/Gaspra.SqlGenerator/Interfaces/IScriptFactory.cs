@@ -4,6 +4,6 @@ namespace Gaspra.SqlGenerator.Interfaces
 {
     public interface IScriptFactory
     {
-        Task<string> ScriptFrom(IScriptVariableSet scriptVariableSet);
+        Task<string> ScriptFrom(IMergeScriptVariableSet scriptVariableSet);
     }
 }

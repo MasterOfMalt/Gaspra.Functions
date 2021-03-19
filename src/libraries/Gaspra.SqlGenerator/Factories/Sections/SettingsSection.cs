@@ -8,19 +8,19 @@ namespace Gaspra.SqlGenerator.Factories.Sections
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 0 });
+        public ScriptOrder Order { get; } = new(new[] { 0 });
 
         public SettingsSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
-        public Task<bool> Valid(IScriptVariableSet variables)
+        public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
             return Task.FromResult(true);
         }
 
-        public async Task<string> Value(IScriptVariableSet variables)
+        public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 0,

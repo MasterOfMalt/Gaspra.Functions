@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
@@ -9,21 +10,21 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 2, 1 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 1 });
 
         public NotMatchedSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
-        public Task<bool> Valid(IScriptVariableSet variables)
+        public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
             return Task.FromResult(true);
         }
 
-        public async Task<string> Value(IScriptVariableSet variables)
+        public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
+            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
 
             var mergeStatement = new List<string>
             {
@@ -31,7 +32,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 $"    THEN INSERT ("
             };
 
-            var insertColumns = variables.Table.Columns.Where(c => !c.IdentityColumn);
+            var insertColumns = variableSet.Table.Columns.Where(c => !c.IdentityColumn);
 
             foreach (var column in insertColumns)
             {
@@ -69,28 +70,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);
-        }
-
-
-        private static string DataType(Column column)
-        {
-            var dataType = $"[{column.DataType}]";
-
-            if (column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
-            {
-                dataType += $"({column.Precision.Value},{column.Scale.Value})";
-            }
-            else if (column.MaxLength.HasValue)
-            {
-                dataType += $"({column.MaxLength.Value})";
-            }
-
-            return dataType;
-        }
-
-        private static string NullableColumn(Column column)
-        {
-            return column.Nullable ? "NULL" : "NOT NULL";
         }
     }
 }

@@ -6,6 +6,6 @@ namespace Gaspra.SqlGenerator.Interfaces
 {
     public interface IScriptVariableFactory
     {
-        Task<IReadOnlyCollection<IScriptVariableSet>> VariablesFrom(DatabaseModel database);
+        Task<IReadOnlyCollection<IMergeScriptVariableSet>> MergeVariablesFrom(DatabaseModel database);
     }
 }

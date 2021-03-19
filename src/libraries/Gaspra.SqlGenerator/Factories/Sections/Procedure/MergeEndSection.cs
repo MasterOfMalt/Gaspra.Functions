@@ -9,19 +9,19 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new ScriptOrder(new[] { 1, 2, 5 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 5 });
 
         public MergeEndSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
-        public Task<bool> Valid(IScriptVariableSet variables)
+        public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
             return Task.FromResult(true);
         }
 
-        public async Task<string> Value(IScriptVariableSet variables)
+        public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
             var mergeStatement = new List<string>
             {
@@ -35,28 +35,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);
-        }
-
-
-        private static string DataType(Column column)
-        {
-            var dataType = $"[{column.DataType}]";
-
-            if (column.DataType.Equals("decimal") && column.Precision.HasValue && column.Scale.HasValue)
-            {
-                dataType += $"({column.Precision.Value},{column.Scale.Value})";
-            }
-            else if (column.MaxLength.HasValue)
-            {
-                dataType += $"({column.MaxLength.Value})";
-            }
-
-            return dataType;
-        }
-
-        private static string NullableColumn(Column column)
-        {
-            return column.Nullable ? "NULL" : "NOT NULL";
         }
     }
 }

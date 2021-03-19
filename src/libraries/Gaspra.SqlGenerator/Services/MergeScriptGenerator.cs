@@ -62,11 +62,11 @@ namespace Gaspra.SqlGenerator.Services
             }
 
             // Build up the script variables sets
-            IReadOnlyCollection<IScriptVariableSet> scriptVariableSets;
+            IReadOnlyCollection<IMergeScriptVariableSet> mergeScriptVariableSets;
 
             try
             {
-                scriptVariableSets = await _scriptVariableFactory.VariablesFrom(database);
+                mergeScriptVariableSets = await _scriptVariableFactory.MergeVariablesFrom(database);
             }
             catch (Exception ex)
             {
@@ -82,11 +82,11 @@ namespace Gaspra.SqlGenerator.Services
 
             try
             {
-                foreach (var scriptVariableSet in scriptVariableSets)
+                foreach (var mergeScriptVariableSet in mergeScriptVariableSets)
                 {
-                    var script = await _scriptFactory.ScriptFrom(scriptVariableSet);
+                    var script = await _scriptFactory.ScriptFrom(mergeScriptVariableSet);
 
-                    var mergeScript = new MergeScript(scriptVariableSet.ScriptName, script);
+                    var mergeScript = new MergeScript(mergeScriptVariableSet.ScriptName, script);
 
                     mergeScripts.Add(mergeScript);
                 }
