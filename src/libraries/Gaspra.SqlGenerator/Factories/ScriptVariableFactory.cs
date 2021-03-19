@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Gaspra.Database.Extensions;
 using Gaspra.Database.Models;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
@@ -71,42 +72,6 @@ namespace Gaspra.SqlGenerator.Factories
             }
 
             return Task.FromResult((IReadOnlyCollection<IMergeScriptVariableSet>)mergeScriptVariableSets);
-        }
-    }
-
-    public static class TableModelExtensions
-    {
-        public static IReadOnlyCollection<ColumnModel> TableTypeColumns(this TableModel table, SchemaModel schema)
-        {
-            //todo
-            return null;
-        }
-
-        public static IReadOnlyCollection<ColumnModel> MergeIdentifierColumns(this TableModel table, SchemaModel schema)
-        {
-            //todo
-            return null;
-        }
-
-        public static IReadOnlyCollection<ColumnModel> DeleteIdentifierColumns(this TableModel table,
-            SchemaModel schema)
-        {
-            //todo
-            return null;
-        }
-
-        public static (string ComparisonColumn, string RetentionMonths) RetentionPolicy(this TableModel table)
-        {
-            //todo
-            return (null, null);
-        }
-
-        public static
-            IReadOnlyCollection<(TableModel joinTable, IReadOnlyCollection<ColumnModel> joinColumns,
-                IReadOnlyCollection<ColumnModel> selectColumns)> TablesToJoin(this TableModel table, SchemaModel schema)
-        {
-            //todo
-            return null;
         }
     }
 }

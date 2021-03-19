@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Gaspra.SqlGenerator.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
+using Gaspra.Database.Extensions;
 
 namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 {
