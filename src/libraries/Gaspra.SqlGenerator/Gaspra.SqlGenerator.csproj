@@ -4,10 +4,6 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Extensions" />
-    <Folder Include="Factories" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Gaspra.Database\Gaspra.Database.csproj" />
   </ItemGroup>
   <Import Project="..\..\..\.paket\Paket.Restore.targets" />

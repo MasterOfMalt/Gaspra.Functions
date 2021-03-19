@@ -62,7 +62,7 @@ namespace Gaspra.SqlGenerator.Services
             }
 
             // Build up the script variables sets
-            var scriptVariableSets = new List<ScriptVariableSet>();
+            IReadOnlyCollection<IScriptVariableSet> scriptVariableSets;
 
             try
             {
