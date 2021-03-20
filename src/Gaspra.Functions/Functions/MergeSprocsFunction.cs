@@ -1,6 +1,4 @@
-﻿using Gaspra.DatabaseUtility.Interfaces;
-using Gaspra.Functions.Correlation;
-using Gaspra.Functions.Correlation.Interfaces;
+﻿using Gaspra.Functions.Correlation;
 using Gaspra.Functions.Extensions;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Logging;

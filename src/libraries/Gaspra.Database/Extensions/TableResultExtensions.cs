@@ -1,4 +1,5 @@
-﻿using Gaspra.Database.Models;
+﻿using System;
+using Gaspra.Database.Models;
 using Gaspra.Database.Models.QueryResults;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,6 +31,14 @@ namespace Gaspra.Database.Extensions
 
             foreach (var tableResult in tableResults)
             {
+                var maxLength = tableResult.MaxLength;
+
+                if(tableResult.DataType.Equals("nvarchar", StringComparison.InvariantCultureIgnoreCase)
+                   && maxLength != null)
+                {
+                    maxLength /= 2;
+                }
+
                 var columnModel = new ColumnModel
                 {
                     Id = tableResult.ColumnId,
@@ -37,7 +46,7 @@ namespace Gaspra.Database.Extensions
                     Nullable = tableResult.Nullable,
                     IdentityColumn = tableResult.Identity,
                     DataType = tableResult.DataType,
-                    MaxLength = tableResult.MaxLength,
+                    MaxLength = maxLength,
                     Precision = tableResult.Precision,
                     Scale = tableResult.Scale,
                     SeedValue = tableResult.SeedValue,

@@ -148,7 +148,7 @@ namespace Gaspra.Database.Extensions
 
                 if (allColumnsAreConstraints)
                 {
-                    isLink = !(table.DependantTables != null && table.DependantTables.All(t => t.Depth.Equals(-1)));
+                    isLink = !(table.DependantTables != null && table.DependantTables.Any(t => !t.Depth.Equals(-1)));
 
                     // foreach (var column in table.Columns.Where(c => !c.IdentityColumn))
                     // {
@@ -186,9 +186,16 @@ namespace Gaspra.Database.Extensions
             //
             if (table.DependantTables != null)
             {
-                foreach (var dependantTable in table.DependantTables)
+                foreach (var dependantTable in table.DependantTables.Where(t => t.Depth >= table.Depth))
                 {
                     var identifyingColumns = dependantTable.Columns.Where(c => !c.IdentityColumn);
+
+                    tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                }
+
+                foreach (var dependantTable in table.DependantTables.Where(t => t.Depth < table.Depth))
+                {
+                    var identifyingColumns = dependantTable.Columns.Where(c => c.IdentityColumn);
 
                     tableTypeColumns.AddRange(identifyingColumns.Distinct());
                 }

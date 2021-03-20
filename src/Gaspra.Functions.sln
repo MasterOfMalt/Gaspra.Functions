@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.Functions", "Gaspra.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{86753390-5CA8-4566-A614-1BB994E9D5EA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gaspra.DatabaseUtility", "libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj", "{DEAEDAAE-D712-4087-A16A-9982B1F4A98E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deprecated.Gaspra.DatabaseUtility", "libraries\Deprecated.Gaspra.DatabaseUtility\Deprecated.Gaspra.DatabaseUtility.csproj", "{DEAEDAAE-D712-4087-A16A-9982B1F4A98E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F1F0B158-6174-4B04-B4B9-17239906BF21}"
 	ProjectSection(SolutionItems) = preProject

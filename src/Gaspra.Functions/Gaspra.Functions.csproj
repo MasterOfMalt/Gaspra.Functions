@@ -17,7 +17,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Gaspra.Functions.Correlation\Gaspra.Functions.Correlation.csproj" />
-    <ProjectReference Include="..\libraries\Gaspra.DatabaseUtility\Gaspra.DatabaseUtility.csproj" />
     <ProjectReference Include="..\libraries\Gaspra.Database\Gaspra.Database.csproj" />
     <ProjectReference Include="..\libraries\Gaspra.SqlGenerator\Gaspra.SqlGenerator.csproj" />
   </ItemGroup>

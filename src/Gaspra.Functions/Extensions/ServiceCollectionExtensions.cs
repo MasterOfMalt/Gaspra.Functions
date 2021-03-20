@@ -1,9 +1,7 @@
 ﻿using Gaspra.Database.Extensions;
-using Gaspra.DatabaseUtility.Extensions;
 using Gaspra.Functions.Functions;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Linq;
 using Gaspra.SqlGenerator.Extensions;
 

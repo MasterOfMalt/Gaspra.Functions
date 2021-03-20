@@ -45,10 +45,24 @@ namespace Gaspra.Database.Extensions
                     .Where(t => t.IsLinkTable(database))
                     .ToList();
 
-                if (linkTables.Any())
+                foreach (var linkTable in linkTables)
                 {
-                    await linkTables.RecurseTableDepths(0, database);
+                    if (linkTable.DependantTables != null)
+                    {
+                        var linkDepth = linkTable
+                            .DependantTables
+                            .Select(t => t.Depth)
+                            .OrderByDescending(d => d)
+                            .First();
+
+                        linkTable.Depth = linkDepth + 1;
+                    }
                 }
+
+                // if (linkTables.Any())
+                // {
+                //     await linkTables.RecurseTableDepths(0, database);
+                // }
             }
         }
 
