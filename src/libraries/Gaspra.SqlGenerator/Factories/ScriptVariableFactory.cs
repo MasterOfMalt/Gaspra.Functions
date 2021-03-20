@@ -28,7 +28,7 @@ namespace Gaspra.SqlGenerator.Factories
                 {
                     try
                     {
-                        var scriptName = $"Merge{table.Name}";
+                        var scriptName = $"{schema}.Merge{table.Name}";
 
                         var tableTypeVariableName = $"{table.Name}Variable";
 
