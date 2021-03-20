@@ -32,7 +32,7 @@ namespace Gaspra.Database.Models
         /// </summary>
         public ICollection<TableModel> ReferenceTables { get; set; }
         /// <summary>
-        /// Tables depth in the dependancy chain, where 1 is the top most
+        /// Tables depth in the dependency chain, where 1 is the top most
         /// dependant table, with other tables. Depth = -1 means the depth
         /// has not been calculated/ can not be calculated for this table
         /// </summary>

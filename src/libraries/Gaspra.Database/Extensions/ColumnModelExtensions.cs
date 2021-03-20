@@ -1,4 +1,6 @@
-﻿using Gaspra.Database.Models;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Gaspra.Database.Models;
 
 namespace Gaspra.Database.Extensions
 {
@@ -38,21 +40,39 @@ namespace Gaspra.Database.Extensions
 
         public static void AddConstraint(this ColumnModel column, string constraintName, ColumnModel reference)
         {
-            column.Constraint = new ConstraintModel
+            var columnConstraints = new List<ConstraintModel>();
+
+            if (column.Constraints != null)
+            {
+                columnConstraints.AddRange(column.Constraints);
+            }
+
+            columnConstraints.Add(new ConstraintModel
             {
                 Name = constraintName,
                 Reference = reference,
                 Parent = true
-            };
+            });
+
+            column.Constraints = columnConstraints;
 
             if (reference != null)
             {
-                reference.Constraint = new ConstraintModel
+                var referenceConstraints = new List<ConstraintModel>();
+
+                if (reference.Constraints != null)
+                {
+                    referenceConstraints.AddRange(reference.Constraints);
+                }
+
+                referenceConstraints.Add(new ConstraintModel
                 {
                     Name = constraintName,
                     Reference = column,
                     Parent = false
-                };
+                });
+
+                reference.Constraints = referenceConstraints;
             }
         }
     }

@@ -8,22 +8,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Gaspra.SqlGenerator.Interfaces;
 
 namespace Gaspra.Functions.Bases
 {
     public class MergeSprocsFunction : IFunction
     {
-        private readonly ILogger logger;
-        private readonly IMergeSprocsService mergeSprocsService;
+        private readonly ILogger _logger;
+        private readonly IMergeScriptGenerator _mergeScriptGenerator;
 
         private string connectionString = "";
 
         public MergeSprocsFunction(
             ILogger<MergeSprocsFunction> logger,
-            IMergeSprocsService mergeSprocsService)
+            IMergeScriptGenerator mergeScriptGenerator)
         {
-            this.logger = logger;
-            this.mergeSprocsService = mergeSprocsService;
+            _logger = logger;
+            _mergeScriptGenerator = mergeScriptGenerator;
         }
 
         public IEnumerable<string> FunctionAliases => new[] { "mergesprocs", "ms" };
@@ -53,20 +54,20 @@ namespace Gaspra.Functions.Bases
 
         public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
-            var mergeSprocs = await mergeSprocsService.GenerateMergeSprocs(
+            var scripts = await _mergeScriptGenerator.Generate(
                 connectionString,
                 new[] { "Analytics" }
                 );
 
-            foreach(var mergeSproc in mergeSprocs)
+            foreach(var script in scripts)
             {
-                if(mergeSproc.Statement.TryWriteFile($"{mergeSproc.Variables.SchemaName}.{mergeSproc.Variables.ProcedureName}.sql"))
+                if(script.Script.TryWriteFile($"{script.Name}.sql"))
                 {
-                    logger.LogInformation($"File written: {mergeSproc.Variables.SchemaName}.{mergeSproc.Variables.ProcedureName}.sql");
+                    _logger.LogInformation($"File written: {script.Name}.sql");
                 }
                 else
                 {
-                    logger.LogError($"File failed to write: {mergeSproc.Variables.SchemaName}.{mergeSproc.Variables.ProcedureName}.sql");
+                    _logger.LogError($"File failed to write: {script.Name}.sql");
                 }
             }
         }

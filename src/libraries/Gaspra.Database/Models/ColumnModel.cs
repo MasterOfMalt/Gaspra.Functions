@@ -1,4 +1,5 @@
-﻿using Gaspra.Database.Interfaces;
+﻿using System.Collections.Generic;
+using Gaspra.Database.Interfaces;
 
 namespace Gaspra.Database.Models
 {
@@ -15,6 +16,6 @@ namespace Gaspra.Database.Models
         public string SeedValue { get; set; }
         public string IncrementValue { get; set; }
         public string DefaultValue { get; set; }
-        public ConstraintModel Constraint { get; set; }
+        public IReadOnlyCollection<ConstraintModel> Constraints { get; set; }
     }
 }

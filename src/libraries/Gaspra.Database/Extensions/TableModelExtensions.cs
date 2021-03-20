@@ -1,4 +1,5 @@
-﻿using Gaspra.Database.Models;
+﻿using System;
+using Gaspra.Database.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -143,63 +144,254 @@ namespace Gaspra.Database.Extensions
             {
                 var allColumnsAreConstraints = table
                     .Columns
-                    .All(c => c.IdentityColumn || c.Constraint != null);
+                    .All(c => c.IdentityColumn || c.Constraints != null);
 
                 if (allColumnsAreConstraints)
                 {
-                    var allReferencesHaveDepth = true;
+                    isLink = !(table.DependantTables != null && table.DependantTables.All(t => t.Depth.Equals(-1)));
 
-                    foreach (var column in table.Columns.Where(c => !c.IdentityColumn))
-                    {
-                        var referenceTable = databaseModel.GetTableWithColumn(column.Constraint.Reference);
-
-                        if (referenceTable.Depth.Equals(-1))
-                        {
-                            allReferencesHaveDepth = false;
-                        }
-                    }
-
-                    isLink = allReferencesHaveDepth;
+                    // foreach (var column in table.Columns.Where(c => !c.IdentityColumn))
+                    // {
+                    //
+                    //     var referenceTable = databaseModel.GetTableWithColumn(column.Constraints.Reference);
+                    //
+                    //     if (referenceTable.Depth.Equals(-1))
+                    //     {
+                    //         allReferencesHaveDepth = false;
+                    //     }
+                    // }
                 }
             }
 
             return isLink;
         }
 
-
-
-
+        /// <summary>
+        /// todo; write summary
+        /// todo; refactor extension method
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static IReadOnlyCollection<ColumnModel> TableTypeColumns(this TableModel table, SchemaModel schema)
         {
-            //todo
-            return null;
+            var tableTypeColumns = table.Columns
+                // get all columns which aren't identity columns
+                .Where(c => !c.IdentityColumn)
+                //get all columns which aren't foreign key columns
+                .Where(c => c.Constraints == null)
+                .ToList();
+
+            //
+            if (table.DependantTables != null)
+            {
+                foreach (var dependantTable in table.DependantTables)
+                {
+                    var identifyingColumns = dependantTable.Columns.Where(c => !c.IdentityColumn);
+
+                    tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                }
+            }
+
+            if (!tableTypeColumns.Any())
+            {
+                throw new Exception($"Couldn't calculate table type columns for [{table.Name}]");
+            }
+
+            return tableTypeColumns
+                .Distinct()
+                .OrderBy(c => c.Name)
+                .ToList();
         }
 
+        /// <summary>
+        /// todo; write summary
+        /// todo; refactor extension method
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static IReadOnlyCollection<ColumnModel> MergeIdentifierColumns(this TableModel table, SchemaModel schema)
         {
-            //todo
-            return null;
+            var identifyingColumns = new List<ColumnModel>();
+
+            /*
+             * extended property defined merge identifiers
+             */
+            if (table.Properties != null &&
+                table.Properties.Any(p => p.Key.Equals("MergeIdentifier")))
+            {
+                var mergeIdentifyingColumns = table
+                    .Properties
+                    .First(p => p.Key.Equals("MergeIdentifier"))
+                    .Value
+                    .Split(",");
+
+                var mergeColumns = table.Columns.Where(c =>
+                    mergeIdentifyingColumns.Any(m => m.Equals(c.Name))
+                    );
+
+                identifyingColumns.AddRange(mergeColumns);
+            }
+
+            /*
+             * if the table only has one column that isn't an identity
+             * it's going to be the identifying column
+             */
+            if (table.Columns.Count(c => !c.IdentityColumn).Equals(1))
+            {
+                identifyingColumns.AddRange(table.Columns.Where(c => !c.IdentityColumn));
+            }
+
+            /*
+             * calculate the higher branches identifiers
+             * (relating a detail back to a fact)
+             */
+            var linkedTables = new List<TableModel>();
+
+            if (table.DependantTables != null)
+            {
+                linkedTables.AddRange(table.DependantTables);
+            }
+
+            if (table.ReferenceTables != null)
+            {
+                linkedTables.AddRange(table.ReferenceTables);
+            }
+
+            foreach (var linkedTable in linkedTables.Distinct().Where(lt => lt.Depth < table.Depth))
+            {
+
+                    var higherForeignKeyColumns = table
+                        .Columns
+                        .Where(c => c.Constraints != null && c.Constraints.Any(x => linkedTable.Columns.Contains(x.Reference)))
+                        .ToList();
+
+                    identifyingColumns.AddRange(higherForeignKeyColumns);
+            }
+
+            if (!identifyingColumns.Any())
+            {
+                throw new Exception($"Couldn't calculate identifying columns for [{table.Name}]");
+            }
+
+            return identifyingColumns
+                .Distinct()
+                .OrderBy(c => c.Name)
+                .ToList();
         }
 
+        /// <summary>
+        /// todo; write summary
+        /// todo; refactor extension method
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static IReadOnlyCollection<ColumnModel> DeleteIdentifierColumns(this TableModel table,
             SchemaModel schema)
         {
-            //todo
-            return null;
+            var identifyingColumns = new List<ColumnModel>();
+
+            if (table.Properties != null && table.Properties.Any(p => p.Key.Equals("MergeIdentifier")))
+            {
+                var mergeIdentifyingColumns = table
+                    .Properties
+                    .First(e => e.Key.Equals("MergeIdentifier"))
+                    .Value
+                    .Split(",");
+
+                var mergeColumns = table.Columns.Where(c =>
+                    mergeIdentifyingColumns.Any(m => m.Equals(c.Name))
+                );
+
+                identifyingColumns.AddRange(mergeColumns);
+            }
+
+            return identifyingColumns
+                .Distinct()
+                .OrderBy(c => c.Name)
+                .ToList();
         }
 
+        /// <summary>
+        /// todo; write summary
+        /// todo; refactor extension method
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static (string ComparisonColumn, string RetentionMonths) RetentionPolicy(this TableModel table)
         {
-            //todo
+            if (table.Properties != null &&
+                table.Properties.Any(p => p.Key.Equals("RetentionMonths"))
+                && table.Properties.Any(p => p.Key.Equals("RetentionComparisonColumn")))
+            {
+                return (
+                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionMonths"))?.Value,
+                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionComparisonColumn"))?.Value
+                );
+            }
+
             return (null, null);
         }
 
+        /// <summary>
+        /// todo; write summary
+        /// todo; refactor extension method
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static
             IReadOnlyCollection<(TableModel joinTable, IReadOnlyCollection<ColumnModel> joinColumns,
                 IReadOnlyCollection<ColumnModel> selectColumns)> TablesToJoin(this TableModel table, SchemaModel schema)
         {
-            //todo
-            return null;
+            var tablesToJoin = new List<(TableModel, IReadOnlyCollection<ColumnModel>, IReadOnlyCollection<ColumnModel>)>();
+
+            var tablesInJoin = new List<TableModel>();
+
+            var linkedTables = new List<TableModel>();
+
+            if (table.DependantTables != null)
+            {
+                linkedTables.AddRange(table.DependantTables);
+            }
+
+            if (table.ReferenceTables != null)
+            {
+                linkedTables.AddRange(table.ReferenceTables);
+            }
+
+            foreach (var branchTable in linkedTables.Where(b => b.Depth > table.Depth))
+            {
+                if (!tablesInJoin.Contains(branchTable))
+                {
+                    tablesInJoin.Add(branchTable);
+                }
+            }
+
+            foreach (var tableInJoin in tablesInJoin)
+            {
+                /*
+                 * todo:
+                 * need to get the specific columns required for the data and not every column that isn't an identity column
+                 */
+                tablesToJoin.Add((
+                    tableInJoin,
+                    tableInJoin.Columns.Where(c => c.IdentityColumn).ToList(),//MergeIdentifierColumns(schema, dependencyTree),
+                    tableInJoin.Columns.Where(c => !c.IdentityColumn).ToList()
+                ));
+            }
+
+            return tablesToJoin
+                .OrderBy(t => t.Item1.Name)
+                .ToList();
         }
     }
 }
