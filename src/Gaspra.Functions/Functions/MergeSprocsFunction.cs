@@ -59,13 +59,13 @@ namespace Gaspra.Functions.Bases
 
             foreach(var script in scripts)
             {
-                if(script.Script.TryWriteFile($"{script.Name}.sql"))
+                if(script.Script.TryWriteFile($"{script.Name}"))
                 {
-                    _logger.LogInformation($"File written: {script.Name}.sql");
+                    _logger.LogInformation($"File written: {script.Name}");
                 }
                 else
                 {
-                    _logger.LogError($"File failed to write: {script.Name}.sql");
+                    _logger.LogError($"File failed to write: {script.Name}");
                 }
             }
         }

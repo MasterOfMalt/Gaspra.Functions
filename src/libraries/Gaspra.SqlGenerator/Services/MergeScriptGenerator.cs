@@ -86,7 +86,7 @@ namespace Gaspra.SqlGenerator.Services
                 {
                     var script = await _scriptFactory.ScriptFrom(mergeScriptVariableSet);
 
-                    var mergeScript = new MergeScript(mergeScriptVariableSet.ScriptName, script);
+                    var mergeScript = new MergeScript(mergeScriptVariableSet.ScriptFileName, script);
 
                     mergeScripts.Add(mergeScript);
                 }

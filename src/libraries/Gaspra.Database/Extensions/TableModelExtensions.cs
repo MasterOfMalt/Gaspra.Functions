@@ -273,7 +273,7 @@ namespace Gaspra.Database.Extensions
 
                     var higherForeignKeyColumns = table
                         .Columns
-                        .Where(c => c.Constraints != null && c.Constraints.Any(x => linkedTable.Columns.Contains(x.Reference)))
+                        .Where(c => c.Constraints != null && c.Constraints.Any(x => linkedTable.Columns.Contains(x.Reference) && x.Parent))
                         .ToList();
 
                     identifyingColumns.AddRange(higherForeignKeyColumns);

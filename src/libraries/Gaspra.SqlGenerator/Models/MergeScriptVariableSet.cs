@@ -6,6 +6,7 @@ namespace Gaspra.SqlGenerator.Models
 {
     public class MergeScriptVariableSet : IMergeScriptVariableSet
     {
+        public string ScriptFileName { get; set; }
         public string ScriptName { get; set; }
         public SchemaModel Schema { get; set; }
         public TableModel Table { get; set; }

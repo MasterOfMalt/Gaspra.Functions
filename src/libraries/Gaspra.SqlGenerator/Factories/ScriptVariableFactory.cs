@@ -28,7 +28,9 @@ namespace Gaspra.SqlGenerator.Factories
                 {
                     try
                     {
-                        var scriptName = $"{schema.Name}.Merge{table.Name}";
+                        var scriptFileName = $"{schema.Name}.Merge{table.Name}.sql";
+
+                        var scriptName = $"Merge{table.Name}";
 
                         var tableTypeVariableName = $"{table.Name}Variable";
 
@@ -51,6 +53,7 @@ namespace Gaspra.SqlGenerator.Factories
                             DeleteIdentifierColumns = deleteIdentifierColumns,
                             MergeIdentifierColumns = mergeIdentifierColumns,
                             RetentionPolicy = retentionPolicy,
+                            ScriptFileName = scriptFileName,
                             ScriptName = scriptName,
                             TablesToJoin = tablesToJoin,
                             TableTypeColumns = tableTypeColumns,
