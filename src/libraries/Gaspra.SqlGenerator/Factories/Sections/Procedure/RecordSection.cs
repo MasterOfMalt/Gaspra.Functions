@@ -6,13 +6,13 @@ using Gaspra.SqlGenerator.Models;
 
 namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 {
-    public class OutputSection : IScriptSection
+    public class RecordSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 4 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 7 });
 
-        public OutputSection(IScriptLineFactory scriptLineFactory)
+        public RecordSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
@@ -32,13 +32,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var mergeStatement = new List<string>
-            {
-                $"OUTPUT",
-                $"    $action AS MergeAction",
-                $"    ,COALESCE(deleted.{variableSet.Table.Name}Id, inserted.{variableSet.Table.Name}Id) AS {variableSet.Table.Name}Id"
-            };
-
             var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
 
             var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
@@ -47,14 +40,24 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             var insertedColumns = variableSet.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Where(c => !c.IdentityColumn).Where(c => c.Constraints != null);
 
+            var valuesToConcat = "";
+
             foreach (var column in insertedColumns)
             {
-                var line = $"    ,COALESCE(deleted.{column.Name}, inserted.{column.Name}) AS {column.Name}";
-
-                mergeStatement.Add(line);
+                valuesToConcat += $",' {column.Name}=',mr.{column.Name}";
             }
 
-            mergeStatement.Add("INTO @MergeResult");
+            var mergeStatement = new List<string>
+            {
+                $"INSERT INTO",
+                $"    [Analytics].[ProofOfConceptHistory]",
+                $"SELECT",
+                $"    mr.MergeAction,",
+                $"    GETUTCDATE(),",
+                $"    CONCAT('{variableSet.Table.Name}Id=',mr.{variableSet.Table.Name}Id{valuesToConcat})",
+                $"FROM",
+                $"    @MergeResult mr"
+            };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

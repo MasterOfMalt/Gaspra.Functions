@@ -37,12 +37,14 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var match in matchOn)
             {
-                var line = $"    t.[{match}]=s.[{match}]";
+                var line = $"    ";
 
-                if (match != matchOn.Last())
+                if (match != matchOn.First())
                 {
-                    line += " AND";
+                    line += "AND ";
                 }
+
+                line += $"t.[{match}]=s.[{match}]";
 
                 mergeStatement.Add(line);
             }

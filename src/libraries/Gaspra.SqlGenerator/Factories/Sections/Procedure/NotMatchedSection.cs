@@ -36,12 +36,18 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var column in insertColumns)
             {
-                var line = $"        [{column.Name}]";
+                var line = $"        ";
 
-                if (column != insertColumns.Last())
+                if (column != insertColumns.First())
                 {
                     line += ",";
                 }
+                else
+                {
+                    line += " ";
+                }
+
+                line += $"[{column.Name}]";
 
                 mergeStatement.Add(line);
             }
@@ -52,12 +58,18 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var column in insertColumns)
             {
-                var line = $"        s.[{column.Name}]";
+                var line = $"        ";
 
-                if (column != insertColumns.Last())
+                if (column != insertColumns.First())
                 {
                     line += ",";
                 }
+                else
+                {
+                    line += " ";
+                }
+
+                line += $"s.[{column.Name}]";
 
                 mergeStatement.Add(line);
             }

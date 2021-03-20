@@ -31,17 +31,24 @@ namespace Gaspra.SqlGenerator.Factories.Sections
             {
                 $"IF NOT EXISTS (SELECT 1 FROM [sys].[types] st JOIN [sys].[schemas] ss ON st.schema_id = ss.schema_id WHERE st.name = N'{variableSet.TableTypeName}' AND ss.name = N'{variableSet.Schema.Name}')",
                 "BEGIN",
-                $"    CREATE TYPE [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] AS TABLE("
+                $"    CREATE TYPE [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] AS TABLE",
+                "    ("
             };
 
             foreach(var column in variableSet.TableTypeColumns.OrderBy(c => c.Name))
             {
-                var columnDescription = $"        [{column.Name}] {column.DataType()} {column.NullableColumn()}";
+                var columnDescription = $"        ";
 
-                if(column != variableSet.TableTypeColumns.OrderBy(c => c.Name).Last())
+                if(column != variableSet.TableTypeColumns.OrderBy(c => c.Name).First())
                 {
                     columnDescription += ",";
                 }
+                else
+                {
+                    columnDescription += " ";
+                }
+
+                columnDescription += $"{column.FullyQualifiedDescription()}";
 
                 createTypeLines.Add(columnDescription);
             }

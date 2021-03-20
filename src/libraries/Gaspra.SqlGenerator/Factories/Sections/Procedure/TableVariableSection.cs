@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gaspra.Database.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
-using Gaspra.Database.Extensions;
 
 namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 {
@@ -37,12 +37,18 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var column in columns)
             {
-                var line = $"    [{column.Name}] {column.DataType()} {column.NullableColumn()}";
+                var line = $"    ";
 
-                if (column != columns.Last())
+                if (column != columns.First())
                 {
                     line += ",";
                 }
+                else
+                {
+                    line += " ";
+                }
+
+                line += $"{column.FullyQualifiedDescription()}";
 
                 tableVariableLines.Add(line);
             }
@@ -55,12 +61,18 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var column in columns)
             {
-                var line = $"    [{column.Name}]";
+                var line = $"    ";
 
-                if (column != columns.Last())
+                if (column != columns.First())
                 {
                     line += ",";
                 }
+                else
+                {
+                    line += " ";
+                }
+
+                line += $"[{column.Name}]";
 
                 tableVariableLines.Add(line);
             }

@@ -36,17 +36,77 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
             var mergeStatement = new List<string>
             {
                 $"WHEN MATCHED",
-                $"    THEN UPDATE SET"
             };
+
+            var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
+
+            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
+
+            if (!(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any()))
+            {
+                mergeStatement.Add($"    AND EXISTS (");
+
+                mergeStatement.Add($"        SELECT");
+
+                foreach (var column in updateColumns)
+                {
+                    var line = $"            ";
+
+                    if (column != updateColumns.First())
+                    {
+                        line += ",";
+                    }
+                    else
+                    {
+                        line += " ";
+                    }
+
+                    line += $"s.[{column.Name}]";
+
+                    mergeStatement.Add(line);
+                }
+
+                mergeStatement.Add($"        EXCEPT");
+
+                mergeStatement.Add($"        SELECT");
+
+                foreach (var column in updateColumns)
+                {
+                    var line = $"            ";
+
+                    if (column != updateColumns.First())
+                    {
+                        line += ",";
+                    }
+                    else
+                    {
+                        line += " ";
+                    }
+
+                    line += $"t.[{column.Name}]";
+
+                    mergeStatement.Add(line);
+                }
+
+                mergeStatement.Add($"    )");
+            }
+
+            mergeStatement.Add($"THEN UPDATE SET");
 
             foreach (var column in updateColumns)
             {
-                var line = $"        t.[{column.Name}]=s.[{column.Name}]";
+                var line = $"        ";
 
-                if (column != updateColumns.Last())
+                if (column != updateColumns.First())
                 {
                     line += ",";
                 }
+                else
+                {
+                    line += " ";
+                }
+
+                line += $"t.[{column.Name}]=s.[{column.Name}]";
 
                 mergeStatement.Add(line);
             }

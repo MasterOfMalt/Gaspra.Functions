@@ -9,7 +9,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 5 });
+        public ScriptOrder Order { get; } = new (new[] { 1, 2, 5 });
 
         public MergeEndSection(IScriptLineFactory scriptLineFactory)
         {
@@ -25,8 +25,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
         {
             var mergeStatement = new List<string>
             {
-                $"/** End of merge statement **/",
-                $";"
+                $"; /** End of merge statement **/"
             };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(

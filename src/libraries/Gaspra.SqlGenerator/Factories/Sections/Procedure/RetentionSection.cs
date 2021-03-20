@@ -18,7 +18,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            return Task.FromResult(!string.IsNullOrWhiteSpace(variableSet.RetentionPolicy.ComparisonColumn));
+            return Task.FromResult(variableSet.RetentionPolicy.RetentionMonths != null);
         }
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
