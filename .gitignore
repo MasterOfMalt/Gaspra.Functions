@@ -39,3 +39,6 @@ bld/
 # Paket dependency manager
 .paket/
 paket-files/
+
+# Rider
+.idea/

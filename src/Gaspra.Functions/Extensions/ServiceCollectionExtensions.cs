@@ -1,9 +1,9 @@
-﻿using Gaspra.DatabaseUtility.Extensions;
+﻿using Gaspra.Database.Extensions;
 using Gaspra.Functions.Functions;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Linq;
+using Gaspra.SqlGenerator.Extensions;
 
 namespace Gaspra.Functions.Extensions
 {
@@ -29,7 +29,8 @@ namespace Gaspra.Functions.Extensions
             }
 
             collection
-                .SetupDatabaseUtility()
+                .SetupDatabaseServices()
+                .SetupSqlGenerator()
                 .AddSingleton<IHelper, Helper>();
 
             return collection;
