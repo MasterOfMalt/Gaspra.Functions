@@ -32,7 +32,7 @@ namespace Gaspra.SqlGenerator.Factories
 
                         var scriptName = $"Merge{table.Name}";
 
-                        var tableTypeVariableName = $"{table.Name}Variable";
+                        var tableTypeVariableName = $"{table.Name}";
 
                         var tableTypeName = $"TT_{table.Name}";
 

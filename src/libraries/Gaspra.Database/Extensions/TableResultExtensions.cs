@@ -2,6 +2,7 @@
 using Gaspra.Database.Models;
 using Gaspra.Database.Models.QueryResults;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Gaspra.Database.Extensions
@@ -56,6 +57,10 @@ namespace Gaspra.Database.Extensions
 
                 columns.Add(columnModel);
             }
+
+            columns = columns
+                .OrderBy(c => c.Name)
+                .ToList();
 
             return Task.FromResult((IReadOnlyCollection<ColumnModel>)columns);
         }

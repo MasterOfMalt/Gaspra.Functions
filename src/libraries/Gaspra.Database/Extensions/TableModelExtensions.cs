@@ -339,8 +339,8 @@ namespace Gaspra.Database.Extensions
                 && table.Properties.Any(p => p.Key.Equals("RetentionComparisonColumn")))
             {
                 return (
-                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionMonths"))?.Value,
-                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionComparisonColumn"))?.Value
+                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionComparisonColumn"))?.Value,
+                    table.Properties.FirstOrDefault(p => p.Key.Equals("RetentionMonths"))?.Value
                 );
             }
 
@@ -370,12 +370,12 @@ namespace Gaspra.Database.Extensions
                 linkedTables.AddRange(table.DependantTables);
             }
 
-            if (table.ReferenceTables != null)
-            {
-                linkedTables.AddRange(table.ReferenceTables);
-            }
+            //if (table.ReferenceTables != null)
+            //{
+            //    linkedTables.AddRange(table.ReferenceTables);
+            //}
 
-            foreach (var branchTable in linkedTables.Where(b => b.Depth > table.Depth))
+            foreach (var branchTable in linkedTables.Where(b => b.Depth >= table.Depth))
             {
                 if (!tablesInJoin.Contains(branchTable))
                 {
