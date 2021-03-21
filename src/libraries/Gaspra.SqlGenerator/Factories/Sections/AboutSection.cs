@@ -98,6 +98,14 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 aboutText.AddRange(dependantTables);
             }
 
+            var assemblyValue = Assembly
+                .GetEntryAssembly()?
+                .CustomAttributes
+                .FirstOrDefault(a => a.AttributeType == typeof(AssemblyInformationalVersionAttribute))?
+                .ConstructorArguments
+                .FirstOrDefault()
+                .Value;
+
             aboutText.AddRange(new List<string> {
                 $"#pad",
                 $" ** Inserts: {inserts}",
@@ -105,7 +113,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 $" ** Deletes: {deletes}",
                 $" ** Retention policy: {retention} {retentionAmount}",
                 $"#pad",
-                $" ** Gaspra.Functions v{Assembly.GetEntryAssembly().GetName().Version}"
+                $" ** Gaspra.Functions v{assemblyValue}"
             });
 
             var affix = " **";
