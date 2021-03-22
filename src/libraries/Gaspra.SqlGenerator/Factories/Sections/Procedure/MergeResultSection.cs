@@ -20,15 +20,9 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            //var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
-            //
-            //var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
-            //
-            //var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-            //
-            //return Task.FromResult(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any());
+            var recordResults = variableSet.Table.RecordTable(variableSet.Schema) != null;
 
-            return Task.FromResult(true);
+            return Task.FromResult(recordResults);
         }
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
@@ -43,17 +37,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 $"    ,[{variableSet.Table.Name}Id] [int]",
                 ")"
             };
-
-            // var columnLines = variableSet.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Where(c => c.Constraints != null);
-            //
-            // foreach(var columnLine in columnLines)
-            // {
-            //     var line = $"    ,{columnLine.FullyQualifiedDescription(false)}";
-            //
-            //     insertValues.Add(line);
-            // }
-            //
-            // insertValues.Add(")");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

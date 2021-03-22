@@ -30,7 +30,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 .Columns
                 .FirstOrDefault(c => c.IdentityColumn);
 
-            //insert into soft deleted
             var script = new List<string>
             {
                 $"INSERT INTO",

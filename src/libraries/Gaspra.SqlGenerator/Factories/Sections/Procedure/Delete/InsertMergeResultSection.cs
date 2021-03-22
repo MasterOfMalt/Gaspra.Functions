@@ -20,7 +20,11 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            return Task.FromResult(variableSet.Table.SoftDeleteColumn() != null);
+            var recordResults = variableSet.Table.RecordTable(variableSet.Schema) != null;
+
+            var softDeletes = variableSet.Table.SoftDeleteColumn() != null;
+
+            return Task.FromResult(recordResults && softDeletes);
         }
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
