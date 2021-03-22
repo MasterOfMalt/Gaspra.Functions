@@ -176,11 +176,14 @@ namespace Gaspra.Database.Extensions
         /// <exception cref="Exception"></exception>
         public static IReadOnlyCollection<ColumnModel> TableTypeColumns(this TableModel table, SchemaModel schema)
         {
+            var softDeleteColumn = table.SoftDeleteColumn();
+
             var tableTypeColumns = table.Columns
                 // get all columns which aren't identity columns
                 .Where(c => !c.IdentityColumn)
                 //get all columns which aren't foreign key columns
                 .Where(c => c.Constraints == null)
+                .Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn))
                 .ToList();
 
             //
@@ -399,6 +402,77 @@ namespace Gaspra.Database.Extensions
             return tablesToJoin
                 .OrderBy(t => t.Item1.Name)
                 .ToList();
+        }
+
+        /// <summary>
+        /// todo; write summary
+        /// </summary>
+        /// <param name="table"></param>
+        /// <returns></returns>
+        public static ColumnModel SoftDeleteColumn(this TableModel table)
+        {
+            if (table.Properties != null && table.Properties.Any(p => p.Key.Equals("gf.SoftDelete", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var columnName = table
+                    .Properties
+                    .FirstOrDefault(p => p.Key.Equals("gf.SoftDelete", StringComparison.InvariantCultureIgnoreCase))?
+                    .Value;
+
+                if (!string.IsNullOrWhiteSpace(columnName))
+                {
+                    return table
+                        .Columns
+                        .FirstOrDefault(c => c.Name.Equals(columnName));
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// todo; write summary
+        /// </summary>
+        /// <param name="table"></param>
+        /// <returns></returns>
+        public static bool ShouldSkipTable(this TableModel table)
+        {
+            if (table.Properties != null && table.Properties.Any(p => p.Key.Equals("gf.Skip", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var shouldSkip = table
+                    .Properties
+                    .FirstOrDefault(p => p.Key.Equals("gf.Skip", StringComparison.InvariantCultureIgnoreCase))?
+                    .Value;
+
+                return !string.IsNullOrWhiteSpace(shouldSkip);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// todo; write summary
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        public static TableModel RecordTable(this TableModel table, SchemaModel schema)
+        {
+            if (table.Properties != null && table.Properties.Any(p => p.Key.Equals("gf.Record", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var tableName = table
+                    .Properties
+                    .FirstOrDefault(p => p.Key.Equals("gf.Record", StringComparison.InvariantCultureIgnoreCase))?
+                    .Value;
+
+                if (!string.IsNullOrWhiteSpace(tableName))
+                {
+                    return schema
+                        .Tables
+                        .FirstOrDefault(c => c.Name.Equals(tableName));
+                }
+            }
+
+            return null;
         }
     }
 }

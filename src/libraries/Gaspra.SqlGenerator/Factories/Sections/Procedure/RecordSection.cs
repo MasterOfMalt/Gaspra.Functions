@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gaspra.Database.Extensions;
+using Gaspra.Database.Models;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
@@ -19,42 +21,25 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            //var matchOn = variables.MergeIdentifierColumns.Select(c => c.Name);
-            //
-            //var deleteOn = variables.DeleteIdentifierColumns.Select(c => c.Name);
-            //
-            //var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-            //
-            //return Task.FromResult(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any());
+            var recordTable = variableSet.Table.RecordTable(variableSet.Schema);
 
-            return Task.FromResult(true);
+            return Task.FromResult(recordTable != null);
         }
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
-
-            var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
-
-            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-
-            var insertedColumns = variableSet.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Where(c => !c.IdentityColumn).Where(c => c.Constraints != null);
-
-            var valuesToConcat = "";
-
-            foreach (var column in insertedColumns)
-            {
-                valuesToConcat += $",' {column.Name}=',mr.{column.Name}";
-            }
+            var recordTable = variableSet.Table.RecordTable(variableSet.Schema);
 
             var mergeStatement = new List<string>
             {
                 $"INSERT INTO",
-                $"    [Analytics].[ProofOfConceptHistory]",
+                $"    [{variableSet.Schema.Name}].[{recordTable.Name}]",
                 $"SELECT",
-                $"    mr.MergeAction,",
+                $"    '{variableSet.Table.Name}',",
+                $"    '{variableSet.Table.Name}Id',", //todo: use identity column
+                $"    mr.{variableSet.Table.Name}Id,", //todo: use identity column
                 $"    GETUTCDATE(),",
-                $"    CONCAT('{variableSet.Table.Name}Id=',mr.{variableSet.Table.Name}Id{valuesToConcat})",
+                $"    mr.MergeAction",
                 $"FROM",
                 $"    @MergeResult mr"
             };

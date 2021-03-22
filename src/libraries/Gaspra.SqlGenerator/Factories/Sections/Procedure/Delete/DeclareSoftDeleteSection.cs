@@ -5,42 +5,42 @@ using Gaspra.Database.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
-namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
+namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 {
-    public class MergeResultSection : IScriptSection
+    public class DeclareSoftDeleteSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 1 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 1, 0, 2 });
 
-        public MergeResultSection(IScriptLineFactory scriptLineFactory)
+        public DeclareSoftDeleteSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            var recordResults = variableSet.Table.RecordTable(variableSet.Schema) != null;
-
-            return Task.FromResult(recordResults);
+            return Task.FromResult(variableSet.Table.SoftDeleteColumn() != null);
         }
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
+            var identityColumn = variableSet
+                .Table
+                .Columns
+                .FirstOrDefault(c => c.IdentityColumn);
 
-            var insertValues = new List<string>
+            var script = new List<string>
             {
-                "DECLARE @MergeResult TABLE",
+                "DECLARE @SoftDelete TABLE",
                 "(",
-                $"     [MergeAction] [varchar](6)",
-                $"    ,[{variableSet.Table.Name}Id] [int]",
+                $"     {identityColumn.FullyQualifiedDescription(false)}",
                 ")"
             };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,
-                insertValues.ToArray()
+                script.ToArray()
                 );
 
             return await _scriptLineFactory.StringFrom(scriptLines);

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gaspra.Database.Extensions;
+using Gaspra.Database.Models;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
@@ -31,19 +33,24 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
         {
             var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
 
-            var updateColumns = variableSet.Table.Columns.Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase))).Where(c => !c.IdentityColumn);
+            var softDeleteColumn = variableSet.Table.SoftDeleteColumn();
+
+            var updateColumns = variableSet.Table.Columns
+                .Where(c => !matchOn.Any(m => m.Equals(c.Name, StringComparison.InvariantCultureIgnoreCase)))
+                .Where(c => !c.IdentityColumn)
+                .Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn));
 
             var mergeStatement = new List<string>
             {
                 $"WHEN MATCHED",
             };
 
-            var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
+            // var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
+            //
+            // var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
 
-            var deleteOnFactId = matchOn.Where(m => !deleteOn.Any(d => d.Equals(m))).FirstOrDefault();
-
-            if (!(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any()))
-            {
+            // if (!(!string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any()))
+            // {
                 mergeStatement.Add($"    AND EXISTS (");
 
                 mergeStatement.Add($"        SELECT");
@@ -89,9 +96,9 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 }
 
                 mergeStatement.Add($"    )");
-            }
+            //}
 
-            mergeStatement.Add($"THEN UPDATE SET");
+            mergeStatement.Add($"    THEN UPDATE SET");
 
             foreach (var column in updateColumns)
             {
