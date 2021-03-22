@@ -98,7 +98,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 mergeStatement.Add($"    )");
             //}
 
-            mergeStatement.Add($"THEN UPDATE SET");
+            mergeStatement.Add($"    THEN UPDATE SET");
 
             foreach (var column in updateColumns)
             {
