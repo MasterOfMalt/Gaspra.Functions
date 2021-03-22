@@ -37,21 +37,23 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             var insertValues = new List<string>
             {
-                "DECLARE @MergeResult TABLE (",
+                "DECLARE @MergeResult TABLE",
+                "(",
                 $"     [MergeAction] [varchar](6)",
-                $"    ,[{variableSet.Table.Name}Id] [int]"
+                $"    ,[{variableSet.Table.Name}Id] [int]",
+                ")"
             };
 
-            var columnLines = variableSet.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Where(c => c.Constraints != null);
-
-            foreach(var columnLine in columnLines)
-            {
-                var line = $"    ,{columnLine.FullyQualifiedDescription(false)}";
-
-                insertValues.Add(line);
-            }
-
-            insertValues.Add(")");
+            // var columnLines = variableSet.Table.Columns.Where(c => matchOn.Any(m => m.Equals(c.Name))).Where(c => c.Constraints != null);
+            //
+            // foreach(var columnLine in columnLines)
+            // {
+            //     var line = $"    ,{columnLine.FullyQualifiedDescription(false)}";
+            //
+            //     insertValues.Add(line);
+            // }
+            //
+            // insertValues.Add(")");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

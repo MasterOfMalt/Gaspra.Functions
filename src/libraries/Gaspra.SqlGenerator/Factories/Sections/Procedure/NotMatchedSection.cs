@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gaspra.Database.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
@@ -32,7 +33,13 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 $"    THEN INSERT ("
             };
 
-            var insertColumns = variableSet.Table.Columns.Where(c => !c.IdentityColumn);
+            var softDeleteColumn = variableSet.Table.SoftDeleteColumn();
+
+            var insertColumns = variableSet
+                .Table
+                .Columns
+                .Where(c => !c.IdentityColumn);
+                //.Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn));
 
             foreach (var column in insertColumns)
             {
@@ -69,7 +76,14 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                     line += " ";
                 }
 
-                line += $"s.[{column.Name}]";
+                if (!column.Equals(softDeleteColumn))
+                {
+                    line += $"s.[{column.Name}]";
+                }
+                else
+                {
+                    line += "0";
+                }
 
                 mergeStatement.Add(line);
             }
