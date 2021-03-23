@@ -59,7 +59,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
             {
                 "WHEN MATCHED",
                 "    THEN UPDATE SET",
-                "        t.[Deleted]=0",
+                "        t.[Deleted]=NULL",
                 "OUTPUT",
                 $"     inserted.{variableSet.Table.Name}Id"
             });

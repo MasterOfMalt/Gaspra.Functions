@@ -82,7 +82,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 }
                 else
                 {
-                    line += "0";
+                    line += "NULL";
                 }
 
                 mergeStatement.Add(line);

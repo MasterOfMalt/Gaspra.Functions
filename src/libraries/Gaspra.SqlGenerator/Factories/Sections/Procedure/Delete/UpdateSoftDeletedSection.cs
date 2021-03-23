@@ -35,7 +35,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 $"UPDATE",
                 $"    {variableSet.Table.Name}",
                 $"SET",
-                $"    {variableSet.Table.Name}.Deleted = 1",
+                $"    {variableSet.Table.Name}.Deleted = GETUTCDATE()",
                 "FROM",
                 $"    [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name}",
                 $"    INNER JOIN @SoftDelete sd ON {variableSet.Table.Name}.{identityColumn.Name}=sd.{identityColumn.Name}"
