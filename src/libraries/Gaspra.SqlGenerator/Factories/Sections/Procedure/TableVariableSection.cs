@@ -27,7 +27,15 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var columns = variableSet.Table.Columns.Where(c => !c.IdentityColumn);
+            var softDeleteColumn = variableSet
+                .Table
+                .SoftDeleteColumn();
+
+            var columns = variableSet
+                .Table
+                .Columns
+                .Where(c => !c.IdentityColumn)
+                .Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn));
 
             var tableVariableLines = new List<string>
             {
