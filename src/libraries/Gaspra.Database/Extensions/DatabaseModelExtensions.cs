@@ -24,25 +24,25 @@ namespace Gaspra.Database.Extensions
 
                 if (factTables.Any())
                 {
-                    await factTables.RecurseTableDepths(depth, database);
+                    await factTables.RecurseTableDepths(depth);
                 }
 
                 var parentConstraintTables = schema
                     .Tables
                     .Where(t =>
-                        !t.IsLinkTable(database) &&
+                        !t.IsLinkTable() &&
                         t.Depth.Equals(-1) &&
                         (t.DependantTables == null || !t.DependantTables.Any()))
                     .ToList();
 
                 if (parentConstraintTables.Any())
                 {
-                    await parentConstraintTables.RecurseTableDepths(depth, database);
+                    await parentConstraintTables.RecurseTableDepths(depth);
                 }
 
                 var linkTables = schema
                     .Tables
-                    .Where(t => t.IsLinkTable(database))
+                    .Where(t => t.IsLinkTable())
                     .ToList();
 
                 foreach (var linkTable in linkTables)
@@ -58,11 +58,6 @@ namespace Gaspra.Database.Extensions
                         linkTable.Depth = linkDepth + 1;
                     }
                 }
-
-                // if (linkTables.Any())
-                // {
-                //     await linkTables.RecurseTableDepths(0, database);
-                // }
             }
         }
 
