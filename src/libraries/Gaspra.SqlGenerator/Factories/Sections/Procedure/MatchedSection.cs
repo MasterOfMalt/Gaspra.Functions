@@ -22,7 +22,14 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public Task<bool> Valid(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
+            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name).ToList();
+
+            var softDeleteColumn = variableSet.Table.SoftDeleteColumn();
+
+            if (softDeleteColumn != null)
+            {
+                matchOn.Add(softDeleteColumn.Name);
+            }
 
             return Task.FromResult(
                 !matchOn.Count().Equals(variableSet.Table.Columns.Count) &&

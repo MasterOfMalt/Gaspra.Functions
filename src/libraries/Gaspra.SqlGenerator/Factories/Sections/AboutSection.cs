@@ -27,7 +27,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name);
+            var matchOn = variableSet.MergeIdentifierColumns.Select(c => c.Name).ToList();
 
             var deleteOn = variableSet.DeleteIdentifierColumns.Select(c => c.Name);
 
@@ -35,10 +35,17 @@ namespace Gaspra.SqlGenerator.Factories.Sections
 
             var inserts = true;
 
+            var softDeleteColumn = variableSet.Table.SoftDeleteColumn();
+
+            if (softDeleteColumn != null)
+            {
+                matchOn.Add(softDeleteColumn.Name);
+            }
+
             var updates = !matchOn.Count().Equals(variableSet.Table.Columns.Count) &&
                 !variableSet.Table.Columns.Where(c => !c.IdentityColumn).Select(c => c.Name).All(n => matchOn.Any(m => m.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
 
-            var deletes = !string.IsNullOrWhiteSpace(deleteOnFactId) && deleteOn.Any();
+            var deletes = softDeleteColumn != null;
 
             var retention = !string.IsNullOrWhiteSpace(variableSet.RetentionPolicy.ComparisonColumn);
 
@@ -106,11 +113,18 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 .FirstOrDefault()
                 .Value;
 
+            var softDeleteColumnValue = "";
+
+            if (softDeleteColumn != null)
+            {
+                softDeleteColumnValue = $" (column: [{softDeleteColumn.Name}])";
+            }
+
             aboutText.AddRange(new List<string> {
                 $"#pad",
                 $" ** Inserts: {inserts}",
                 $" ** Updates: {updates}",
-                $" ** Deletes: {deletes}",
+                $" ** Deletes: {deletes}{softDeleteColumnValue}",
                 $" ** Retention policy: {retention} {retentionAmount}",
                 $"#pad",
                 $" ** Gaspra.Functions v{assemblyValue}"

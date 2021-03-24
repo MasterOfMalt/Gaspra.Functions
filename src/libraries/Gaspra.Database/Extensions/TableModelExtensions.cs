@@ -3,6 +3,7 @@ using Gaspra.Database.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic.FileIO;
 
 namespace Gaspra.Database.Extensions
 {
@@ -83,7 +84,7 @@ namespace Gaspra.Database.Extensions
         /// <param name="depth"></param>
         /// <param name="databaseModel"></param>
         /// <returns></returns>
-        public static async Task RecurseTableDepths(this ICollection<TableModel> tables, int depth, DatabaseModel databaseModel)
+        public static async Task RecurseTableDepths(this ICollection<TableModel> tables, int depth)
         {
             if (tables != null && tables.Any())
             {
@@ -93,7 +94,7 @@ namespace Gaspra.Database.Extensions
 
                 foreach (var table in tables)
                 {
-                    await RecurseTableDepths(await table.GetConnectingTables(databaseModel), nextDepth, databaseModel);
+                    await RecurseTableDepths(await table.GetConnectingTables(), nextDepth);
                 }
             }
         }
@@ -103,18 +104,17 @@ namespace Gaspra.Database.Extensions
         /// and dependant constraints
         /// </summary>
         /// <param name="table"></param>
-        /// <param name="databaseModel"></param>
         /// <returns></returns>
-        public static Task<ICollection<TableModel>> GetConnectingTables(this TableModel table, DatabaseModel databaseModel)
+        public static Task<ICollection<TableModel>> GetConnectingTables(this TableModel table)
         {
             var referenceTables = table
                 .ReferenceTables?
-                .Where(t => t != null && !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
+                .Where(t => t != null && !t.IsLinkTable() && t.Depth.Equals(-1))
                 .ToList() ?? new List<TableModel>();
 
             var dependantTables = table
                 .DependantTables?
-                .Where(t => t != null && !t.IsLinkTable(databaseModel) && t.Depth.Equals(-1))
+                .Where(t => t != null && !t.IsLinkTable() && t.Depth.Equals(-1))
                 .ToList() ?? new List<TableModel>();
 
             var tables = referenceTables;
@@ -134,36 +134,97 @@ namespace Gaspra.Database.Extensions
         /// linking other tables together
         /// </summary>
         /// <param name="table"></param>
-        /// <param name="databaseModel"></param>
         /// <returns></returns>
-        public static bool IsLinkTable(this TableModel table, DatabaseModel databaseModel)
+        public static bool IsLinkTable(this TableModel table)
         {
             var isLink = false;
 
-            if (table != null && table.Depth.Equals(-1))
+            if (table != null)// && table.Depth.Equals(-1))
             {
                 var allColumnsAreConstraints = table
                     .Columns
                     .All(c => c.IdentityColumn || c.Constraints != null);
 
+                // all columns must be constraints or identity columns
                 if (allColumnsAreConstraints)
                 {
-                    isLink = !(table.DependantTables != null && table.DependantTables.Any(t => !t.Depth.Equals(-1)));
+                    // must be dependant on tables
+                    if (table.DependantTables != null)
+                    {
+                        var deadEnd = false;
 
-                    // foreach (var column in table.Columns.Where(c => !c.IdentityColumn))
-                    // {
-                    //
-                    //     var referenceTable = databaseModel.GetTableWithColumn(column.Constraints.Reference);
-                    //
-                    //     if (referenceTable.Depth.Equals(-1))
-                    //     {
-                    //         allReferencesHaveDepth = false;
-                    //     }
-                    // }
+                        foreach (var dependant in table.DependantTables)
+                        {
+                            // if any of the dependant tables can't reach
+                            // the root this is not a link table
+                            if (!dependant.CanReachRoot(new[] { table }))
+                            {
+                                deadEnd = true;
+                            }
+                        }
+
+                        isLink = !deadEnd;
+                    }
                 }
             }
 
             return isLink;
+        }
+
+        /// <summary>
+        /// todo; summary
+        /// todo; refactor (yey recursion)
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="avoidingTables"></param>
+        /// <returns></returns>
+        public static bool CanReachRoot(this TableModel table, IReadOnlyCollection<TableModel> avoidingTables)
+        {
+            var linkedTables = new List<TableModel>();
+
+            if (table.DependantTables != null)
+            {
+                linkedTables.AddRange(table.DependantTables);
+            }
+
+            if (table.ReferenceTables != null)
+            {
+                linkedTables.AddRange(table.ReferenceTables);
+            }
+
+            if (linkedTables.Any(l => l.Depth.Equals(1)))
+            {
+                return true;
+            }
+
+            var recurseTables = new List<TableModel>();
+
+            foreach (var link in linkedTables)
+            {
+                if (!avoidingTables.Any(a => a.Equals(link)))
+                {
+                    recurseTables.Add(link);
+                }
+            }
+
+            if (!recurseTables.Any())
+            {
+                return false;
+            }
+
+            foreach (var recurse in recurseTables)
+            {
+                var avoid = avoidingTables.ToList();
+
+                avoid.AddRange(recurseTables);
+
+                if (recurse.CanReachRoot(avoid))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -176,31 +237,48 @@ namespace Gaspra.Database.Extensions
         /// <exception cref="Exception"></exception>
         public static IReadOnlyCollection<ColumnModel> TableTypeColumns(this TableModel table, SchemaModel schema)
         {
-            var softDeleteColumn = table.SoftDeleteColumn();
+            var tableTypeColumns = new List<ColumnModel>();
 
-            var tableTypeColumns = table.Columns
-                // get all columns which aren't identity columns
-                .Where(c => !c.IdentityColumn)
-                //get all columns which aren't foreign key columns
-                .Where(c => c.Constraints == null)
-                .Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn))
-                .ToList();
-
-            //
-            if (table.DependantTables != null)
+            if (table.IsLinkTable())
             {
-                foreach (var dependantTable in table.DependantTables.Where(t => t.Depth >= table.Depth))
+                tableTypeColumns = table
+                    .Columns
+                    .Where(c => !c.IdentityColumn)
+                    .ToList();
+            }
+            else
+            {
+                var softDeleteColumn = table.SoftDeleteColumn();
+
+                tableTypeColumns = table.Columns
+                    // get all columns which aren't identity columns
+                    .Where(c => !c.IdentityColumn)
+                    //get all columns which aren't foreign key columns
+                    .Where(c => c.Constraints == null)
+                    .Where(c => softDeleteColumn == null || !c.Equals(softDeleteColumn))
+                    .ToList();
+
+                //
+                if (table.DependantTables != null)
                 {
-                    var identifyingColumns = dependantTable.Columns.Where(c => !c.IdentityColumn);
+                    foreach (var dependantTable in table.DependantTables.Where(t => t.Depth >= table.Depth))
+                    {
+                        var dependantSoftDeleteColumn = dependantTable.SoftDeleteColumn();
 
-                    tableTypeColumns.AddRange(identifyingColumns.Distinct());
-                }
+                        var identifyingColumns = dependantTable
+                            .Columns
+                            .Where(c => !c.IdentityColumn)
+                            .Where(c => dependantSoftDeleteColumn == null || !c.Equals(dependantSoftDeleteColumn));
 
-                foreach (var dependantTable in table.DependantTables.Where(t => t.Depth < table.Depth))
-                {
-                    var identifyingColumns = dependantTable.Columns.Where(c => c.IdentityColumn);
+                        tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                    }
 
-                    tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                    foreach (var dependantTable in table.DependantTables.Where(t => t.Depth < table.Depth))
+                    {
+                        var identifyingColumns = dependantTable.Columns.Where(c => c.IdentityColumn);
+
+                        tableTypeColumns.AddRange(identifyingColumns.Distinct());
+                    }
                 }
             }
 

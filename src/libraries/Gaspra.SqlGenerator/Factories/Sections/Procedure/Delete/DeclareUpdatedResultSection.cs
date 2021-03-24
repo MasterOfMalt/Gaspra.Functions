@@ -34,18 +34,35 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
             {
                 "DECLARE @UpdatedResult TABLE",
                 "(",
-                $"     {identityColumn.FullyQualifiedDescription(false)}"
+                $"     {identityColumn.FullyQualifiedDescription(false)} PRIMARY KEY"
             };
 
             var matchOn = variableSet
                 .MergeIdentifierColumns
-                .Select(c => c.Name);
+                .Where(c => c.Constraints != null)
+                .Select(c => c.Name)
+                .ToList();
+
+            var property = variableSet
+                .Table
+                .Properties
+                .FirstOrDefault(p => p.Key.Equals("gf.SoftDeleteIdentifier"))?
+                .Value;
+
+            if (!string.IsNullOrWhiteSpace(property))
+            {
+                matchOn
+                    .AddRange(property.Split(","));
+
+                matchOn = matchOn
+                    .Distinct()
+                    .ToList();
+            }
 
             var columnLines = variableSet
                 .Table
                 .Columns
-                .Where(c => matchOn.Any(m => m.Equals(c.Name)))
-                .Where(c => c.Constraints != null);
+                .Where(c => matchOn.Any(m => m.Equals(c.Name)));
 
             foreach(var columnLine in columnLines)
             {
@@ -53,6 +70,8 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
                 script.Add(line);
             }
+
+            script.Add($"    ,INDEX IX_UpdatedResult NONCLUSTERED({string.Join(", ", columnLines.Select(c => c.Name))})");
 
             script.Add(")");
 
