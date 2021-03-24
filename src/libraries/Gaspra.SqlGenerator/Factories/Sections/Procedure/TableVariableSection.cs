@@ -92,7 +92,9 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
             foreach (var table in variableSet.TablesToJoin)
             {
-                var joinColumns = string.Join(" AND ", table.selectColumns.Select(c => $"tt.[{c.Name}]=alias_{table.joinTable.Name.ToLower()}.[{c.Name}]"));
+                var joinTableSoftDeleteColumn = table.joinTable.SoftDeleteColumn();
+
+                var joinColumns = string.Join(" AND ", table.selectColumns.Where(c => !c.Equals(joinTableSoftDeleteColumn)).Select(c => $"tt.[{c.Name}]=alias_{table.joinTable.Name.ToLower()}.[{c.Name}]"));
 
                 var line = $"    INNER JOIN [{variableSet.Schema.Name}].[{table.joinTable.Name}] AS alias_{table.joinTable.Name.ToLower()} ON {joinColumns}";
 

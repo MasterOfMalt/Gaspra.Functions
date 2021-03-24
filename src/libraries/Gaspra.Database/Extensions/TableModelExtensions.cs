@@ -263,7 +263,12 @@ namespace Gaspra.Database.Extensions
                 {
                     foreach (var dependantTable in table.DependantTables.Where(t => t.Depth >= table.Depth))
                     {
-                        var identifyingColumns = dependantTable.Columns.Where(c => !c.IdentityColumn);
+                        var dependantSoftDeleteColumn = dependantTable.SoftDeleteColumn();
+
+                        var identifyingColumns = dependantTable
+                            .Columns
+                            .Where(c => !c.IdentityColumn)
+                            .Where(c => dependantSoftDeleteColumn == null || !c.Equals(dependantSoftDeleteColumn));
 
                         tableTypeColumns.AddRange(identifyingColumns.Distinct());
                     }
