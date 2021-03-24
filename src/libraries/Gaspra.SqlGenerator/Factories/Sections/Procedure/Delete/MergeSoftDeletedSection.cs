@@ -64,11 +64,32 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 $"     inserted.{variableSet.Table.Name}Id"
             });
 
+            var outputMatchOn = variableSet
+                .MergeIdentifierColumns
+                .Where(c => c.Constraints != null)
+                .Select(c => c.Name)
+                .ToList();
+
+            var property = variableSet
+                .Table
+                .Properties
+                .FirstOrDefault(p => p.Key.Equals("gf.SoftDeleteIdentifier"))?
+                .Value;
+
+            if (!string.IsNullOrWhiteSpace(property))
+            {
+                outputMatchOn
+                    .AddRange(property.Split(","));
+
+                outputMatchOn = outputMatchOn
+                    .Distinct()
+                    .ToList();
+            }
+
             var columnLines = variableSet
                 .Table
                 .Columns
-                .Where(c => matchOn.Any(m => m.Equals(c.Name)))
-                .Where(c => c.Constraints != null);
+                .Where(c => outputMatchOn.Any(m => m.Equals(c.Name)));
 
             foreach(var columnLine in columnLines)
             {

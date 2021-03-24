@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Gaspra.Database.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
@@ -7,13 +6,13 @@ using Gaspra.SqlGenerator.Models;
 
 namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 {
-    public class UpdateSoftDeletedSection : IScriptSection
+    public class EndSoftDeleteSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 1, 0, 6 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 1, 0, 7 });
 
-        public UpdateSoftDeletedSection(IScriptLineFactory scriptLineFactory)
+        public EndSoftDeleteSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
@@ -25,24 +24,13 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
-            var identityColumn = variableSet
-                .Table
-                .Columns
-                .FirstOrDefault(c => c.IdentityColumn);
-
             var script = new List<string>
             {
-                $"UPDATE",
-                $"    {variableSet.Table.Name}",
-                $"SET",
-                $"    {variableSet.Table.Name}.Deleted = GETUTCDATE()",
-                "FROM",
-                $"    [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name}",
-                $"    INNER JOIN @SoftDelete sd ON {variableSet.Table.Name}.{identityColumn.Name}=sd.{identityColumn.Name}"
+                $"END"
             };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
-                2,
+                1,
                 script.ToArray()
                 );
 

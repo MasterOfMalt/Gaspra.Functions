@@ -31,12 +31,16 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 .Columns
                 .FirstOrDefault(c => c.IdentityColumn);
 
+            var usingType = (variableSet.TablesToJoin != null && variableSet.TablesToJoin.Any()) ? $"{variableSet.ScriptName}Variable" : $"{variableSet.TableTypeVariableName}";
+
             var script = new List<string>
             {
-                $"INSERT INTO",
-                $"    @SoftDelete",
-                $"SELECT DISTINCT",
-                $"    {variableSet.Table.Name}.{identityColumn.Name}"
+                $"IF ((SELECT COUNT(1) FROM @{usingType})!=(SELECT COUNT(1) FROM @UpdatedResult))",
+                $"BEGIN",
+                $"    INSERT INTO",
+                $"        @SoftDelete",
+                $"    SELECT",
+                $"        {variableSet.Table.Name}.{identityColumn.Name}"
             };
 
             var matchOn = variableSet
@@ -81,12 +85,12 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
             script.AddRange(new List<string>
             {
-                $"FROM",
-                $"    [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name}",
-                $"    INNER JOIN @UpdatedResult innerResult ON {innerResultJoin}",
-                $"    LEFT JOIN @UpdatedResult outerResult ON {variableSet.Table.Name}.{identityColumn.Name} = outerResult.{identityColumn.Name}",
-                $"WHERE",
-                $"    outerResult.{identityColumn.Name} IS NULL"
+                $"    FROM",
+                $"        [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name}",
+                $"        INNER JOIN @UpdatedResult innerResult ON {innerResultJoin}",
+                $"        LEFT JOIN @UpdatedResult outerResult ON {variableSet.Table.Name}.{identityColumn.Name} = outerResult.{identityColumn.Name}",
+                $"    WHERE",
+                $"        outerResult.{identityColumn.Name} IS NULL"
             });
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
