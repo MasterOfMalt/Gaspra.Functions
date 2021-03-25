@@ -12,7 +12,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 1, 0, 4 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 4 });
 
         public InsertSoftDeletedSection(IScriptLineFactory scriptLineFactory)
         {
@@ -32,16 +32,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 .FirstOrDefault(c => c.IdentityColumn);
 
             var usingType = (variableSet.TablesToJoin != null && variableSet.TablesToJoin.Any()) ? $"{variableSet.ScriptName}Variable" : $"{variableSet.TableTypeVariableName}";
-
-            var script = new List<string>
-            {
-                $"IF ((SELECT COUNT(1) FROM @{usingType})!=(SELECT COUNT(1) FROM @UpdatedResult))",
-                $"BEGIN",
-                $"    INSERT INTO",
-                $"        @SoftDelete",
-                $"    SELECT",
-                $"        {variableSet.Table.Name}.{identityColumn.Name}"
-            };
 
             var matchOn = variableSet
                 .MergeIdentifierColumns
@@ -82,6 +72,21 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                     innerResultJoin += " AND ";
                 }
             }
+
+            var script = new List<string>
+            {
+                "IF EXISTS",
+                "(",
+                $"    SELECT {string.Join(", ", innerResultColumns.Select(c => $"{variableSet.Table.Name}.{c}"))} FROM [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name} INNER JOIN @{usingType} innerResult ON {innerResultJoin} WHERE {variableSet.Table.Name}.Deleted IS NULL",
+                "    EXCEPT",
+                $"    SELECT {string.Join(", ", innerResultColumns)} FROM @UpdatedResult",
+                ")",
+                $"BEGIN",
+                $"    INSERT INTO",
+                $"        @SoftDelete",
+                $"    SELECT",
+                $"        {variableSet.Table.Name}.{identityColumn.Name}"
+            };
 
             script.AddRange(new List<string>
             {
