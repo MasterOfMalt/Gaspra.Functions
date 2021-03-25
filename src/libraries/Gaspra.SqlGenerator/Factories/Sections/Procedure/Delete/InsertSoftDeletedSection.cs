@@ -77,9 +77,9 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
             {
                 "IF EXISTS",
                 "(",
-                $"    SELECT {string.Join(", ", innerResultColumns.Select(c => $"{variableSet.Table.Name}.{c}"))} FROM [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name} INNER JOIN @{usingType} innerResult ON {innerResultJoin} WHERE {variableSet.Table.Name}.Deleted IS NULL",
+                $"    SELECT {variableSet.Table.Name}.{identityColumn.Name} FROM [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name} INNER JOIN @{usingType} innerResult ON {innerResultJoin} WHERE {variableSet.Table.Name}.Deleted IS NULL",
                 "    EXCEPT",
-                $"    SELECT {string.Join(", ", innerResultColumns)} FROM @UpdatedResult",
+                $"    SELECT UpdatedResult.{identityColumn.Name} FROM @UpdatedResult UpdatedResult",
                 ")",
                 $"BEGIN",
                 $"    INSERT INTO",
