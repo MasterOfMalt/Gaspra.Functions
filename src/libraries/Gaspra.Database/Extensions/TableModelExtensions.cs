@@ -552,5 +552,19 @@ namespace Gaspra.Database.Extensions
 
             return null;
         }
+
+        /// <summary>
+        /// Return the identity column name for a table
+        /// </summary>
+        /// <param name="table"></param>
+        /// <returns></returns>
+        public static string IdentityColumnName(this TableModel table)
+        {
+            var identityColumn = table
+                .Columns
+                .FirstOrDefault(c => c.IdentityColumn);
+
+            return identityColumn?.Name;
+        }
     }
 }

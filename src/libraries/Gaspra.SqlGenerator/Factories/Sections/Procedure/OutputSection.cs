@@ -26,11 +26,19 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
 
         public async Task<string> Value(IMergeScriptVariableSet variableSet)
         {
+            var outputTableIdentifier = $"inserted.{variableSet.Table.IdentityColumnName()}";
+
+            if (variableSet.RetentionPolicy.RetentionMonths != null)
+            {
+                outputTableIdentifier =
+                    $"COALESCE(inserted.{variableSet.Table.IdentityColumnName()}, deleted.{variableSet.Table.IdentityColumnName()})";
+            }
+
             var mergeStatement = new List<string>
             {
                 $"OUTPUT",
                 $"     $action AS MergeAction",
-                $"    ,inserted.{variableSet.Table.Name}Id"
+                $"    ,{outputTableIdentifier}"
             };
 
             mergeStatement.Add("INTO @MergeResult");
