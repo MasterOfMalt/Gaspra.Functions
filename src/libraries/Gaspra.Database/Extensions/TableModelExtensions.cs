@@ -269,7 +269,7 @@ namespace Gaspra.Database.Extensions
 
                         // if the dependant table has merge identifiers just use them to get the table,
                         // otherwise fall back on comparing the whole table (without the identity column/ soft delete column)
-                        if (dependantTable.Properties.Any(p => p.Key.Equals("MergeIdentifier")))
+                        if (dependantTable.Properties != null && dependantTable.Properties.Any(p => p.Key.Equals("MergeIdentifier")))
                         {
                             var mergeIdentifierColumnNames = dependantTable.Properties
                                 .First(p => p.Key.Equals("MergeIdentifier")).Value.Split(",");
