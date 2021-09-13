@@ -265,10 +265,24 @@ namespace Gaspra.Database.Extensions
                     {
                         var dependantSoftDeleteColumn = dependantTable.SoftDeleteColumn();
 
-                        var identifyingColumns = dependantTable
-                            .Columns
-                            .Where(c => !c.IdentityColumn)
-                            .Where(c => dependantSoftDeleteColumn == null || !c.Equals(dependantSoftDeleteColumn));
+                        var identifyingColumns = new List<ColumnModel>();
+
+                        // if the dependant table has merge identifiers just use them to get the table,
+                        // otherwise fall back on comparing the whole table (without the identity column/ soft delete column)
+                        if (dependantTable.Properties.Any(p => p.Key.Equals("MergeIdentifier")))
+                        {
+                            var mergeIdentifierColumnNames = dependantTable.Properties
+                                .First(p => p.Key.Equals("MergeIdentifier")).Value.Split(",");
+
+                            identifyingColumns.AddRange(dependantTable.Columns.Where(c => mergeIdentifierColumnNames.Any(i => i.Trim().Equals(c.Name, StringComparison.InvariantCultureIgnoreCase))));
+                        }
+                        else
+                        {
+                            identifyingColumns.AddRange(dependantTable
+                                .Columns
+                                .Where(c => !c.IdentityColumn)
+                                .Where(c => dependantSoftDeleteColumn == null || !c.Equals(dependantSoftDeleteColumn)));
+                        }
 
                         tableTypeColumns.AddRange(identifyingColumns.Distinct());
                     }
