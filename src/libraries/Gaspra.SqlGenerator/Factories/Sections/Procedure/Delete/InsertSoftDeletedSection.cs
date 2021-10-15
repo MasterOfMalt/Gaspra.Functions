@@ -12,7 +12,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 4 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 5 });
 
         public InsertSoftDeletedSection(IScriptLineFactory scriptLineFactory)
         {

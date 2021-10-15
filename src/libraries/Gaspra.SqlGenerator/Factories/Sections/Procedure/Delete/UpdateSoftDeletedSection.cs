@@ -11,7 +11,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 6 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 7 });
 
         public UpdateSoftDeletedSection(IScriptLineFactory scriptLineFactory)
         {
