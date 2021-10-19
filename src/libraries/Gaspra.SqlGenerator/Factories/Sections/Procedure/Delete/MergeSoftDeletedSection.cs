@@ -57,7 +57,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
             script.AddRange(new List<string>
             {
-                "WHEN MATCHED",
+                "WHEN MATCHED AND t.[Deleted] IS NOT NULL",
                 "    THEN UPDATE SET",
                 "        t.[Deleted]=NULL",
                 "OUTPUT",
