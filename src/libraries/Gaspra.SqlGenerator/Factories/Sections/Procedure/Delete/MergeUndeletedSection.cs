@@ -7,13 +7,13 @@ using Gaspra.SqlGenerator.Models;
 
 namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 {
-    public class MergeSoftDeletedSection : IScriptSection
+    public class MergeUndeletedSection : IScriptSection
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 4 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 1 });
 
-        public MergeSoftDeletedSection(IScriptLineFactory scriptLineFactory)
+        public MergeUndeletedSection(IScriptLineFactory scriptLineFactory)
         {
             _scriptLineFactory = scriptLineFactory;
         }
@@ -29,7 +29,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
             var script = new List<string>
             {
-                $"/** Merge all values (anything not updated in the merge actions is effectively marked for deletion) **/",
+                $"/** Set soft delete to NULL where rows have been un-deleted **/",
                 $"MERGE [{variableSet.Schema.Name}].[{variableSet.Table.Name}] AS t",
                 $"USING @{usingType} AS s",
                 $"ON",
@@ -58,52 +58,27 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
             script.AddRange(new List<string>
             {
-                "WHEN MATCHED",
+                "WHEN MATCHED AND t.[Deleted] IS NOT NULL",
                 "    THEN UPDATE SET",
-                "        t.[Deleted]=NULL",
-                "OUTPUT",
-                $"     inserted.{variableSet.Table.Name}Id"
+                "        t.[Deleted]=NULL"
             });
 
-            var outputMatchOn = variableSet
-                .MergeIdentifierColumns
-                .Where(c => c.Constraints != null)
-                .Select(c => c.Name)
-                .ToList();
+            var outputTableIdentifier = $"inserted.{variableSet.Table.IdentityColumnName()}";
 
-            var property = variableSet
-                .Table
-                .Properties
-                .FirstOrDefault(p => p.Key.Equals("gf.SoftDeleteIdentifier"))?
-                .Value;
-
-            if (!string.IsNullOrWhiteSpace(property))
+            if (variableSet.RetentionPolicy.RetentionMonths != null)
             {
-                outputMatchOn
-                    .AddRange(property.Split(","));
-
-                outputMatchOn = outputMatchOn
-                    .Distinct()
-                    .ToList();
-            }
-
-            var columnLines = variableSet
-                .Table
-                .Columns
-                .Where(c => outputMatchOn.Any(m => m.Equals(c.Name)));
-
-            foreach(var columnLine in columnLines)
-            {
-                var line = $"    ,inserted.{columnLine.Name}";
-
-                script.Add(line);
+                outputTableIdentifier =
+                    $"COALESCE(inserted.{variableSet.Table.IdentityColumnName()}, deleted.{variableSet.Table.IdentityColumnName()})";
             }
 
             script.AddRange(new List<string>
             {
-                "INTO",
-                "    @UpdatedResult;"
+                $"OUTPUT",
+                $"     $action AS MergeAction",
+                $"    ,{outputTableIdentifier}"
             });
+
+            script.Add("INTO @MergeResult;");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

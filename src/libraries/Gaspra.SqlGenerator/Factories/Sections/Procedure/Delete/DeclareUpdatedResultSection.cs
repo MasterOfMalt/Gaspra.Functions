@@ -11,7 +11,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
     {
         private readonly IScriptLineFactory _scriptLineFactory;
 
-        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 1 });
+        public ScriptOrder Order { get; } = new(new[] { 1, 2, 6, 2 });
 
         public DeclareUpdatedResultSection(IScriptLineFactory scriptLineFactory)
         {
@@ -32,6 +32,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
 
             var script = new List<string>
             {
+                $"/** Updated results to compare which should be soft deleted **/",
                 "DECLARE @UpdatedResult TABLE",
                 "(",
                 $"     {identityColumn.FullyQualifiedDescription(false)} PRIMARY KEY"

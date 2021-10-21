@@ -38,10 +38,10 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
             {
                 $"OUTPUT",
                 $"     $action AS MergeAction",
-                $"    ,{outputTableIdentifier}"
+                $"    ,{outputTableIdentifier}",
+                $"INTO",
+                $"    @MergeResult;"
             };
-
-            mergeStatement.Add("INTO @MergeResult");
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 1,

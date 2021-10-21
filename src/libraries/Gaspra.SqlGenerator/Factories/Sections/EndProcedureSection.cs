@@ -27,9 +27,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 0,
                 "END",
-                "GO",
-                "",
-                $"ALTER AUTHORIZATION ON [{variableSet.Schema.Name}].[{variableSet.ScriptName}] TO SCHEMA OWNER",
                 "GO"
                 );
 
