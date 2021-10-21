@@ -40,7 +40,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 $"     $action AS MergeAction",
                 $"    ,{outputTableIdentifier}",
                 $"INTO",
-                $"    @MergeResult;"
+                $"    @MergeResult"
             };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(
