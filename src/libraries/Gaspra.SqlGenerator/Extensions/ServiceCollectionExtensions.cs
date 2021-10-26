@@ -15,7 +15,8 @@ namespace Gaspra.SqlGenerator.Extensions
                 .AddSingleton<IScriptFactory, ScriptFactory>()
                 .AddSingleton<IScriptVariableFactory, ScriptVariableFactory>()
                 .AddSingleton<IScriptLineFactory, ScriptLineFactory>()
-                .AddSingleton<IMergeScriptGenerator, MergeScriptGenerator>();
+                .AddSingleton<IMergeScriptGenerator, MergeScriptGenerator>()
+                .AddSingleton<IDatabaseToJsonGenerator, DatabaseToJsonGenerator>();
 
             var scriptSections = Assembly
                 .GetExecutingAssembly()

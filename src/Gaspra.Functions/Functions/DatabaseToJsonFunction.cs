@@ -10,24 +10,24 @@ using Microsoft.Extensions.Logging;
 
 namespace Gaspra.Functions.Functions
 {
-    public class MergeSprocsFunction : IFunction
+    public class DatabaseToJsonFunction : IFunction
     {
         private readonly ILogger _logger;
-        private readonly IMergeScriptGenerator _mergeScriptGenerator;
+        private readonly IDatabaseToJsonGenerator _databaseToJsonGenerator;
 
         private string connectionString = "";
 
-        public MergeSprocsFunction(
-            ILogger<MergeSprocsFunction> logger,
-            IMergeScriptGenerator mergeScriptGenerator)
+        public DatabaseToJsonFunction(
+            ILogger<DatabaseToJsonFunction> logger,
+            IDatabaseToJsonGenerator databaseToJsonGenerator)
         {
             _logger = logger;
-            _mergeScriptGenerator = mergeScriptGenerator;
+            _databaseToJsonGenerator = databaseToJsonGenerator;
         }
 
-        public IEnumerable<string> FunctionAliases => new[] { "mergesprocs", "ms" };
+        public IEnumerable<string> FunctionAliases => new[] { "databasetojson", "dtj" };
 
-        public string FunctionHelp => "Merge sprocs";
+        public string FunctionHelp => "Database to JSON";
 
         public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters)
         {
@@ -52,21 +52,18 @@ namespace Gaspra.Functions.Functions
 
         public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
         {
-            var scripts = await _mergeScriptGenerator.Generate(
+            var jsonDatabase = await _databaseToJsonGenerator.Generate(
                 connectionString,
                 new[] { "Analytics" }
                 );
 
-            foreach(var script in scripts)
+            if (jsonDatabase.TryWriteFile("database.json"))
             {
-                if(script.Script.TryWriteFile($"{script.Name}"))
-                {
-                    _logger.LogInformation($"File written: {script.Name}");
-                }
-                else
-                {
-                    _logger.LogError($"File failed to write: {script.Name}");
-                }
+                _logger.LogInformation($"File written: database");
+            }
+            else
+            {
+                _logger.LogError($"File failed to write: database");
             }
         }
     }

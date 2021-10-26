@@ -1,10 +1,9 @@
-﻿using Deprecated.Gaspra.DatabaseUtility.Models.Database;
-using Deprecated.Gaspra.DatabaseUtility.Models.Tree;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Deprecated.Gaspra.DatabaseUtility.Models.Database;
+using Deprecated.Gaspra.DatabaseUtility.Models.Tree;
 
-namespace Gaspra.MergeSprocs.Extensions
+namespace Deprecated.Gaspra.DatabaseUtility.Extensions
 {
     public static class DependencyBranchExtensions
     {
