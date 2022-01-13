@@ -43,9 +43,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 $"    ,sd.{identityColumn.Name}",
                 "FROM",
                 $"    [{variableSet.Schema.Name}].[{variableSet.Table.Name}] {variableSet.Table.Name}",
-                $"    INNER JOIN @SoftDelete sd ON {variableSet.Table.Name}.{identityColumn.Name}=sd.{identityColumn.Name}",
-                "WHERE",
-                $"    {variableSet.Table.Name}.Deleted IS NULL"
+                $"    INNER JOIN @SoftDelete sd ON {variableSet.Table.Name}.{identityColumn.Name}=sd.{identityColumn.Name}"
             };
 
             var scriptLines = await _scriptLineFactory.LinesFrom(

@@ -34,7 +34,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
             {
                 $"INSERT INTO",
                 $"    [{variableSet.Schema.Name}].[{recordTable.Name}]",
-                $"SELECT",
+                $"SELECT DISTINCT",
                 $"    '{variableSet.Table.Name}',",
                 $"    '{variableSet.Table.Name}Id',", //todo: use identity column
                 $"    mr.{variableSet.Table.Name}Id,", //todo: use identity column

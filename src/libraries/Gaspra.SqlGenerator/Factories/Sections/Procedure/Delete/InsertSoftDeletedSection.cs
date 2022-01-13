@@ -95,7 +95,8 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure.Delete
                 $"        INNER JOIN @UpdatedResult innerResult ON {innerResultJoin}",
                 $"        LEFT JOIN @UpdatedResult outerResult ON {variableSet.Table.Name}.{identityColumn.Name} = outerResult.{identityColumn.Name}",
                 $"    WHERE",
-                $"        outerResult.{identityColumn.Name} IS NULL"
+                $"        outerResult.{identityColumn.Name} IS NULL",
+                $"        AND {variableSet.Table.Name}.Deleted IS NULL"
             });
 
             var scriptLines = await _scriptLineFactory.LinesFrom(

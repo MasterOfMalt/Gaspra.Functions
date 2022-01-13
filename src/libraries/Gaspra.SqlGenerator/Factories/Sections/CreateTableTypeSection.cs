@@ -58,9 +58,6 @@ namespace Gaspra.SqlGenerator.Factories.Sections
                 {
                     "    )",
                     "END",
-                    "GO",
-                    "",
-                    $"ALTER AUTHORIZATION ON TYPE::[{variableSet.Schema.Name}].[{variableSet.TableTypeName}] TO SCHEMA OWNER",
                     "GO"
                 });
 
