@@ -25,7 +25,12 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
         {
             var mergeStatement = new List<string>
             {
-                $"WHEN NOT MATCHED BY SOURCE AND t.{variableSet.RetentionPolicy.ComparisonColumn} < DATEADD(MONTH, -{variableSet.RetentionPolicy.RetentionMonths}, GETUTCDATE())",
+                $"WHEN NOT MATCHED BY SOURCE AND t.[{variableSet.RetentionPolicy.ComparisonColumn}] < DATEADD(MONTH, -{variableSet.RetentionPolicy.RetentionMonths}, GETUTCDATE()) AND t.[Deleted] IS NULL",
+                "    THEN UPDATE SET",
+                "        t.[Deleted]= GETUTCDATE()",
+                "",
+
+                $"WHEN NOT MATCHED BY SOURCE AND t.[{variableSet.RetentionPolicy.ComparisonColumn}] < DATEADD(DAY, -3, DATEADD(MONTH, -{variableSet.RetentionPolicy.RetentionMonths}, GETUTCDATE()))",
                 "    THEN DELETE"
             };
 
