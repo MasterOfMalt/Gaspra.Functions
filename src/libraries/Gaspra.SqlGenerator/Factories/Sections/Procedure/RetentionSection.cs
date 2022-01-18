@@ -30,7 +30,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Procedure
                 "        t.[Deleted]= GETUTCDATE()",
                 "",
 
-                $"WHEN NOT MATCHED BY SOURCE AND t.[{variableSet.RetentionPolicy.ComparisonColumn}] < DATEADD(DAY, -3, DATEADD(MONTH, -{variableSet.RetentionPolicy.RetentionMonths}, GETUTCDATE()))",
+                $"WHEN NOT MATCHED BY SOURCE AND t.[Deleted] < DATEADD(MONTH, -{variableSet.RetentionPolicy.RetentionMonths}, GETUTCDATE())",
                 "    THEN DELETE"
             };
 
