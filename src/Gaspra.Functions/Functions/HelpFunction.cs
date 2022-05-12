@@ -32,13 +32,21 @@ namespace Gaspra.Functions.Functions
 
             foreach (var function in functions)
             {
-                var aliases = string.Join($", ", function.FunctionAliases);
+                var parameters = function.Parameters.Select(p => $"-{p.Key} (Optional: {p.Optional}) {p.About}");
 
-                helpInformation.Add($"[{function.GetType().Name}]");
+                helpInformation.Add($"FUNCTION:");
 
-                helpInformation.Add($"ALIASES: {aliases}");
+                helpInformation.Add($"    {function.GetType().Name}");
 
-                helpInformation.Add($"HELP: {function.FunctionHelp}");
+                helpInformation.Add($"    {function.About}");
+
+                helpInformation.Add($"ALIASES:");
+
+                helpInformation.AddRange(function.Aliases.Select(a => $"    {a}"));
+
+                helpInformation.Add($"PARAMETERS:");
+
+                helpInformation.AddRange(parameters.Select(p => $"    {p}"));
 
                 if (!function.Equals(functions.Last()))
                 {
@@ -63,13 +71,15 @@ namespace Gaspra.Functions.Functions
             this.helper = helper;
         }
 
-        public IEnumerable<string> FunctionAliases => new string[] { "help", "h" };
+        public IReadOnlyCollection<string> Aliases => new string[] { "help", "h" };
 
-        public string FunctionHelp => string.Join($"{Environment.NewLine}", helper.BuildHelpMessage());
+        public IReadOnlyCollection<IFunctionParameter> Parameters => new List<FunctionParameter>();
 
-        public bool ValidateParameters(IEnumerable<IFunctionParameter> parameters) => true;
+        public string About => string.Join($"{Environment.NewLine}", helper.BuildHelpMessage());
 
-        public async Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters)
+        public bool ValidateParameters(IReadOnlyCollection<IFunctionParameter> parameters) => true;
+
+        public async Task Run(CancellationToken cancellationToken, IReadOnlyCollection<IFunctionParameter> parameters)
         {
             await Task.Run(() =>
             {

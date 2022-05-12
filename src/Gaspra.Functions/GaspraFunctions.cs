@@ -47,14 +47,14 @@ namespace Gaspra.Functions
         private async Task ProcessFunction(CancellationToken cancellationToken)
         {
             var function = _functions.FirstOrDefault(
-                f => f.FunctionAliases.Any(
+                f => f.Aliases.Any(
                     a => a.Equals(_cxt.FunctionName, StringComparison.InvariantCultureIgnoreCase)));
 
             if (function == null)
             {
                 _logger.LogError("Function [{requestedFunction}] was not found, please choose from: {availableFunctions}",
                     _cxt.FunctionName,
-                    _functions.Select(f => $"[{string.Join(", ", f.FunctionAliases)}]")
+                    _functions.Select(f => $"[{string.Join(", ", f.Aliases)}]")
                     );
             }
             else
@@ -64,7 +64,7 @@ namespace Gaspra.Functions
                     .Any(p => _helpParameters
                         .Any(h => h.Equals(p.Key, StringComparison.InvariantCultureIgnoreCase))))
                 {
-                    _logger.LogInformation(function.FunctionHelp);
+                    _logger.LogInformation(function.About);
                 }
                 else
                 {

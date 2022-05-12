@@ -6,7 +6,7 @@ namespace Gaspra.Functions.Correlation.Extensions
 {
     public static class FunctionParameterExtensions
     {
-        public static IEnumerable<FunctionParameter> ToParameters(this string[] args)
+        public static IReadOnlyCollection<FunctionParameter> ToParameters(this string[] args)
         {
             var parameters = new List<FunctionParameter>();
 

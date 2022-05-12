@@ -10,6 +10,6 @@ namespace Gaspra.Functions.Correlation.Interfaces
         DateTimeOffset FunctionTimestamp { get; }
         CancellationTokenSource FunctionCancellationSource { get; }
         string FunctionName { get; set; }
-        IEnumerable<IFunctionParameter> FunctionParameters { get; set; }
+        IReadOnlyCollection<IFunctionParameter> FunctionParameters { get; set; }
     }
 }

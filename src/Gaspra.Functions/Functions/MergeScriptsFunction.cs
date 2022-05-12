@@ -10,23 +10,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Gaspra.Functions.Functions
 {
-    public class DatabaseToJsonFunction : IFunction
+    public class MergeScriptsFunction : IFunction
     {
         private readonly ILogger _logger;
-        private readonly IDatabaseToJsonGenerator _databaseToJsonGenerator;
+        private readonly IMergeScriptGenerator _mergeScriptGenerator;
 
-        private string connectionString = "";
+        private string _connectionString = "";
         private IList<string> _schemas = new List<string>();
 
-        public DatabaseToJsonFunction(
-            ILogger<DatabaseToJsonFunction> logger,
-            IDatabaseToJsonGenerator databaseToJsonGenerator)
+        public MergeScriptsFunction(
+            ILogger<MergeScriptsFunction> logger,
+            IMergeScriptGenerator mergeScriptGenerator)
         {
             _logger = logger;
-            _databaseToJsonGenerator = databaseToJsonGenerator;
+            _mergeScriptGenerator = mergeScriptGenerator;
         }
 
-        public IReadOnlyCollection<string> Aliases => new[] { "databasetojson", "dtj" };
+        public IReadOnlyCollection<string> Aliases => new[] { "mergescripts", "ms" };
 
         public IReadOnlyCollection<IFunctionParameter> Parameters => new List<IFunctionParameter>
         {
@@ -34,7 +34,7 @@ namespace Gaspra.Functions.Functions
             new FunctionParameter("s", null, true, "Schemas to generate merge stored procedures for, comma delimited")
         };
 
-        public string About => "Database to JSON";
+        public string About => "Merge stored procedure generator, will traverse the given database and schema to figure out a tree of dependencies before writing the SQL scripts";
 
         public bool ValidateParameters(IReadOnlyCollection<IFunctionParameter> parameters)
         {
@@ -51,7 +51,7 @@ namespace Gaspra.Functions.Functions
                 return false;
             }
 
-            connectionString = connectionStringParameter.Values.First().ToString();
+            _connectionString = connectionStringParameter.Values.First().ToString();
 
             var schemas = parameters
                 .FirstOrDefault(p => p.Key.Equals("s"));
@@ -68,18 +68,21 @@ namespace Gaspra.Functions.Functions
 
         public async Task Run(CancellationToken cancellationToken, IReadOnlyCollection<IFunctionParameter> parameters)
         {
-            var jsonDatabase = await _databaseToJsonGenerator.Generate(
-                connectionString,
+            var scripts = await _mergeScriptGenerator.Generate(
+                _connectionString,
                 _schemas.ToList()
                 );
 
-            if (jsonDatabase.TryWriteFile("database.json"))
+            foreach(var script in scripts)
             {
-                _logger.LogInformation($"File written: database");
-            }
-            else
-            {
-                _logger.LogError($"File failed to write: database");
+                if(script.Script.TryWriteFile($"{script.Name}"))
+                {
+                    _logger.LogInformation($"File written: {script.Name}");
+                }
+                else
+                {
+                    _logger.LogError($"File failed to write: {script.Name}");
+                }
             }
         }
     }

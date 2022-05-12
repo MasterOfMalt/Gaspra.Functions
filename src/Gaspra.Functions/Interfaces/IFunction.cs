@@ -7,9 +7,14 @@ namespace Gaspra.Functions.Interfaces
 {
     public interface IFunction
     {
-        IEnumerable<string> FunctionAliases { get; }
-        string FunctionHelp { get; }
-        bool ValidateParameters(IEnumerable<IFunctionParameter> parameters);
-        Task Run(CancellationToken cancellationToken, IEnumerable<IFunctionParameter> parameters);
+        IReadOnlyCollection<string> Aliases { get; }
+
+        IReadOnlyCollection<IFunctionParameter> Parameters { get; }
+
+        string About { get; }
+
+        bool ValidateParameters(IReadOnlyCollection<IFunctionParameter> parameters);
+
+        Task Run(CancellationToken cancellationToken, IReadOnlyCollection<IFunctionParameter> parameters);
     }
 }
