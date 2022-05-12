@@ -228,6 +228,94 @@ namespace Gaspra.Database.Extensions
         }
 
         /// <summary>
+        /// todo; summary
+        /// todo; refactor (yey recursion)
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="paths">paths traversed</param>
+        /// <param name="maxDepth">todo: refactor this to not be a hard coded limit, work out if paths are covering the same ground and stop them programatically</param>
+        /// <returns></returns>
+        public static IReadOnlyCollection<TableModel> PathToRoot(this TableModel table, ICollection<ICollection<TableModel>> paths = null, int maxDepth = 10)
+        {
+            var pathsToTraverse = new List<ICollection<TableModel>>();
+
+            if (paths == null || !paths.Any())
+            {
+                // this is a root table, just return it in a list
+                if (table.Depth.Equals(1))
+                {
+                    return new List<TableModel> { table };
+                }
+
+                var initialLinkedTables = new List<TableModel>();
+
+                if (table.DependantTables != null)
+                {
+                    initialLinkedTables.AddRange(table.DependantTables);
+                }
+
+                if (table.ReferenceTables != null)
+                {
+                    initialLinkedTables.AddRange(table.ReferenceTables);
+                }
+
+                // path reaches back to the root, return it
+                if (initialLinkedTables.Any(l => l.Depth.Equals(1)))
+                {
+                    var root = initialLinkedTables.First(l => l.Depth.Equals(1));
+
+                    return new List<TableModel> { table, root };
+                }
+
+                pathsToTraverse.AddRange(initialLinkedTables.Select(initialLinkedTable => new List<TableModel> { table, initialLinkedTable }));
+            }
+            else
+            {
+                pathsToTraverse = paths.ToList();
+            }
+
+            var pathsTraversed = new List<ICollection<TableModel>>();
+
+            foreach (var path in pathsToTraverse)
+            {
+                var linkedTables = new List<TableModel>();
+
+                if (path.Last().DependantTables != null)
+                {
+                    linkedTables.AddRange(path.Last().DependantTables);
+                }
+
+                if (path.Last().ReferenceTables != null)
+                {
+                    linkedTables.AddRange(path.Last().ReferenceTables);
+                }
+
+                // path reaches back to the root, return it
+                if (linkedTables.Any(l => l.Depth.Equals(1)))
+                {
+                    path.Add(linkedTables.First(l => l.Depth.Equals(1)));
+
+                    return path.ToList();
+                }
+
+                foreach (var linkedTable in linkedTables)
+                {
+                    path.Add(linkedTable);
+
+                    pathsTraversed.Add(path);
+                }
+            }
+
+            if (pathsTraversed.All(p => p.Count > maxDepth))
+            {
+                // couldn't find any path back to the root
+                return null;
+            }
+
+            return table.PathToRoot(pathsTraversed);
+        }
+
+        /// <summary>
         /// todo; write summary
         /// todo; refactor extension method
         /// </summary>
