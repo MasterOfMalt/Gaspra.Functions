@@ -2,8 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+<<<<<<< HEAD
     <TargetFramework>net6.0</TargetFramework>
-    <Version>0.5.12</Version>
+=======
+    <TargetFramework>net5.0</TargetFramework>
+>>>>>>> e7b8790868d57e673169450012cc6224f8ae1d05
+    <Version>0.5.11</Version>
     <Authors>Gaspra</Authors>
     <Description>console application of functions</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
