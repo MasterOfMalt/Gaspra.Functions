@@ -46,3 +46,4 @@ paket-files/
 
 # Rider
 .idea/
+/src/Gaspra.Functions/Debug.cs
