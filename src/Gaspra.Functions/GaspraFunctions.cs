@@ -1,5 +1,4 @@
-﻿using Gaspra.Functions.Correlation;
-using Gaspra.Functions.Correlation.Interfaces;
+﻿using Gaspra.Functions.Correlation.Interfaces;
 using Gaspra.Functions.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,11 +12,11 @@ namespace Gaspra.Functions
 {
     public class GaspraFunctions : IHostedService
     {
-        private readonly ILogger logger;
-        private readonly IHostApplicationLifetime hostApplicationLifetime;
-        private readonly IEnumerable<IFunction> functions;
-        private readonly ICorrelationContext cxt;
-        private readonly IEnumerable<string> HelpParameters = new[] { "h", "help" };
+        private readonly ILogger _logger;
+        private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly IEnumerable<IFunction> _functions;
+        private readonly ICorrelationContext _cxt;
+        private readonly IEnumerable<string> _helpParameters = new[] { "h", "help" };
 
         public GaspraFunctions(
             ILogger<GaspraFunctions> logger,
@@ -25,101 +24,67 @@ namespace Gaspra.Functions
             IEnumerable<IFunction> functions,
             ICorrelationContext cxt)
         {
-            this.logger = logger;
-            this.hostApplicationLifetime = hostApplicationLifetime;
-            this.functions = functions;
-            this.cxt = cxt;
+            _logger = logger;
+            _hostApplicationLifetime = hostApplicationLifetime;
+            _functions = functions;
+            _cxt = cxt;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            #if DEBUG
-                await SetFunction(cancellationToken);
-            #endif
+            if (Debug.DebugMode)
+            {
+                _cxt.FunctionName = Debug.FunctionName;
+
+                _cxt.FunctionParameters = Debug.FunctionParameters;
+            }
 
             await ProcessFunction(cancellationToken);
 
-            hostApplicationLifetime.StopApplication();
-        }
-
-        private Task SetFunction(CancellationToken cancellationToken)
-        {
-            logger.LogDebug("Type a function to use:");
-
-            var function = Console.ReadLine();
-
-            var inputtingParameters = true;
-
-            var parameters = new List<FunctionParameter>();
-
-            while (inputtingParameters)
-            {
-                logger.LogDebug("Type a parameter key (type # when you're done):");
-
-                var parameterKey = Console.ReadLine();
-
-                if (!parameterKey.Equals("#"))
-                {
-                    logger.LogDebug("Type [{parameterKey}] value:", parameterKey);
-
-                    var parameterValue = Console.ReadLine();
-
-                    parameters.Add(new FunctionParameter(parameterKey, new[] { parameterValue }));
-                }
-                else
-                {
-                    inputtingParameters = false;
-                }
-            }
-
-            cxt.FunctionName = function;
-
-            cxt.FunctionParameters = parameters;
-
-            return Task.CompletedTask;
+            _hostApplicationLifetime.StopApplication();
         }
 
         private async Task ProcessFunction(CancellationToken cancellationToken)
         {
-            var function = functions
-                .Where(f => f.FunctionAliases.Any(f => f.Equals(cxt.FunctionName, StringComparison.InvariantCultureIgnoreCase)))
-                .FirstOrDefault();
+            var function = _functions.FirstOrDefault(
+                f => f.FunctionAliases.Any(
+                    a => a.Equals(_cxt.FunctionName, StringComparison.InvariantCultureIgnoreCase)));
 
             if (function == null)
             {
-                logger.LogError("Function [{requestedFunction}] was not found, please choose from: {availableFunctions}",
-                    cxt.FunctionName,
-                    functions.Select(f => $"[{string.Join(", ", f.FunctionAliases)}]")
+                _logger.LogError("Function [{requestedFunction}] was not found, please choose from: {availableFunctions}",
+                    _cxt.FunctionName,
+                    _functions.Select(f => $"[{string.Join(", ", f.FunctionAliases)}]")
                     );
             }
             else
             {
-                if (cxt
+                if (_cxt
                     .FunctionParameters
-                    .Any(p => HelpParameters
+                    .Any(p => _helpParameters
                         .Any(h => h.Equals(p.Key, StringComparison.InvariantCultureIgnoreCase))))
                 {
-                    logger.LogInformation(function.FunctionHelp);
+                    _logger.LogInformation(function.FunctionHelp);
                 }
                 else
                 {
-                    if (function.ValidateParameters(cxt.FunctionParameters))
+                    if (function.ValidateParameters(_cxt.FunctionParameters))
                     {
-                        logger.LogInformation("Executing [{requestedFunction}] (ctrl+c to exit)",
-                            cxt.FunctionName);
+                        _logger.LogInformation("Executing [{requestedFunction}] (ctrl+c to exit)",
+                            _cxt.FunctionName);
 
                         Console.CancelKeyPress += (sender, e) =>
                         {
-                            cxt.FunctionCancellationSource
+                            _cxt.FunctionCancellationSource
                                 .Cancel();
                         };
 
-                        await function.Run(cxt.FunctionCancellationSource.Token, cxt.FunctionParameters);
+                        await function.Run(_cxt.FunctionCancellationSource.Token, _cxt.FunctionParameters);
                     }
                     else
                     {
-                        logger.LogWarning("Function [{requestedFunction}] parameters are invalid so it will not run.",
-                            cxt.FunctionName);
+                        _logger.LogWarning("Function [{requestedFunction}] parameters are invalid so it will not run.",
+                            _cxt.FunctionName);
                     }
                 }
             }
@@ -127,9 +92,9 @@ namespace Gaspra.Functions
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            logger.LogInformation("Finished [{requestedFunction}] in [{executionTime}]",
-                cxt.FunctionName,
-                DateTimeOffset.UtcNow - cxt.FunctionTimestamp);
+            _logger.LogInformation("Finished [{requestedFunction}] in [{executionTime}]",
+                _cxt.FunctionName,
+                DateTimeOffset.UtcNow - _cxt.FunctionTimestamp);
 
             return Task.CompletedTask;
         }
