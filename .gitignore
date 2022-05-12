@@ -1,10 +1,6 @@
 #Custom
 *.code-workspace
 .pack/
-.Debug
-Debug.cs
-.Debug.cs
-/Debug.cs
 
 # User-specific files
 *.suo
@@ -46,4 +42,3 @@ paket-files/
 
 # Rider
 .idea/
-/src/Gaspra.Functions/Debug.cs
