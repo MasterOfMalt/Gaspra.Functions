@@ -19,21 +19,15 @@ namespace Gaspra.SqlGenerator.Services
         private readonly ILogger _logger;
         private readonly IDatabaseStructure _databaseStructure;
         private readonly IDataAccess _dataAccess;
-        private readonly IScriptVariableFactory _scriptVariableFactory;
-        private readonly IScriptFactory _scriptFactory;
 
         public DatabaseToJsonGenerator(
             ILogger<DatabaseToJsonGenerator> logger,
             IDataAccess dataAccess,
-            IDatabaseStructure databaseStructure,
-            IScriptVariableFactory scriptVariableFactory,
-            IScriptFactory scriptFactory)
+            IDatabaseStructure databaseStructure)
         {
             _logger = logger;
             _databaseStructure = databaseStructure;
             _dataAccess = dataAccess;
-            _scriptFactory = scriptFactory;
-            _scriptVariableFactory = scriptVariableFactory;
         }
 
         public async Task<string> Generate(string connectionString, IReadOnlyCollection<string> schemas)

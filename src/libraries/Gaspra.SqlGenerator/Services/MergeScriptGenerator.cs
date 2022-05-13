@@ -17,14 +17,14 @@ namespace Gaspra.SqlGenerator.Services
         private readonly IDatabaseStructure _databaseStructure;
         private readonly IDataAccess _dataAccess;
         private readonly IScriptVariableFactory _scriptVariableFactory;
-        private readonly IScriptFactory _scriptFactory;
+        private readonly IScriptFactory<IMergeScriptVariableSet> _scriptFactory;
 
         public MergeScriptGenerator(
             ILogger<MergeScriptGenerator> logger,
             IDataAccess dataAccess,
             IDatabaseStructure databaseStructure,
             IScriptVariableFactory scriptVariableFactory,
-            IScriptFactory scriptFactory)
+            IScriptFactory<IMergeScriptVariableSet> scriptFactory)
         {
             _logger = logger;
             _databaseStructure = databaseStructure;

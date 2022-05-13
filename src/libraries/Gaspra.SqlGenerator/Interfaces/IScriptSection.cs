@@ -3,10 +3,10 @@ using Gaspra.SqlGenerator.Models;
 
 namespace Gaspra.SqlGenerator.Interfaces
 {
-    public interface IScriptSection
+    public interface IScriptSection<T> where T : IScriptVariableSet
     {
         ScriptOrder Order { get; }
-        Task<bool> Valid(IMergeScriptVariableSet variableSet);
-        Task<string> Value(IMergeScriptVariableSet variableSet);
+        Task<bool> Valid(T variableSet);
+        Task<string> Value(T variableSet);
     }
 }

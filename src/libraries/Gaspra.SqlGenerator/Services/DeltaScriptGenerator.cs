@@ -17,14 +17,14 @@ namespace Gaspra.SqlGenerator.Services
         private readonly IDatabaseStructure _databaseStructure;
         private readonly IDataAccess _dataAccess;
         private readonly IScriptVariableFactory _scriptVariableFactory;
-        private readonly IScriptFactory _scriptFactory;
+        private readonly IScriptFactory<IDeltaScriptVariableSet> _scriptFactory;
 
         public DeltaScriptGenerator(
             ILogger<DeltaScriptGenerator> logger,
             IDataAccess dataAccess,
             IDatabaseStructure databaseStructure,
             IScriptVariableFactory scriptVariableFactory,
-            IScriptFactory scriptFactory)
+            IScriptFactory<IDeltaScriptVariableSet> scriptFactory)
         {
             _logger = logger;
             _databaseStructure = databaseStructure;
@@ -61,87 +61,131 @@ namespace Gaspra.SqlGenerator.Services
                 return null;
             }
 
-            // Generate delta scripts
-            var tables = database.Schemas.First().Tables.ToList();
+            // Generate delta script variable sets
+            var deltaScriptVariableSets = new List<IDeltaScriptVariableSet>();
 
-            var tablesWithProductHistory = tables.Where(t =>
-                t.Properties != null &&
-                t.Properties.Any(p =>
-                    p.Key.Equals("gf.Record", StringComparison.InvariantCultureIgnoreCase) &&
-                    p.Value.Equals("HistoryProduct", StringComparison.InvariantCultureIgnoreCase))).ToList();
-
-            var testTable = tablesWithProductHistory.FirstOrDefault(t => t.Name.Equals("ProductHierarchyAttribute"));
-
-            var pathsToRoot = new List<IReadOnlyCollection<TableModel>>();
-
-            var unableToFigureOut = new List<TableModel>();
-
-            foreach (var table in tablesWithProductHistory)
+            try
             {
-                var pathToRoot = table.PathToRoot();
+                var tables = database.Schemas.First().Tables.ToList();
 
-                if (pathToRoot == null)
+                var tablesWithProductHistory = tables.Where(t =>
+                    t.Properties != null &&
+                    t.Properties.Any(p =>
+                        p.Key.Equals("gf.Record", StringComparison.InvariantCultureIgnoreCase) &&
+                        p.Value.Equals("HistoryProduct", StringComparison.InvariantCultureIgnoreCase))).ToList();
+
+                var pathsToRoot = tablesWithProductHistory.Select(table => table.PathToRoot()).ToList();
+
+                var deltaScriptVariableSet = new DeltaScriptVariableSet
                 {
-                    unableToFigureOut.Add(table);
-                }
-                else
-                {
-                    pathsToRoot.Add(pathToRoot);
-                }
-            }
-
-            var script = $"DECLARE @Ignore TABLE (TableName NVARCHAR(50)){Environment.NewLine}{Environment.NewLine}" +
-                         $"DECLARE @Identifier TABLE (AtomProductId INT INDEX IX_AtomProductId CLUSTERED){Environment.NewLine}{Environment.NewLine}" +
-                         $"DECLARE @DeltaTime DATETIME = DATEADD(HOUR, -4, GETDATE()){Environment.NewLine}{Environment.NewLine}";
-
-            foreach (var path in pathsToRoot)
-            {
-                var pathToRoot = path.ToList();
-
-                var selectColumn = pathToRoot.Last().Properties.First(p => p.Key.Equals("MergeIdentifier", StringComparison.InvariantCultureIgnoreCase)).Value;
-
-                var select = $"IF NOT EXISTS (SELECT 1 FROM @Ignore WHERE TableName='{pathToRoot.First().Name}'){Environment.NewLine}BEGIN{Environment.NewLine}" +
-                             $"    INSERT INTO{Environment.NewLine}        @Identifier{Environment.NewLine}    SELECT{Environment.NewLine}        {path.Last().Name}.{selectColumn}{Environment.NewLine}    FROM{Environment.NewLine}";
-
-                var joins = $"        Analytics.HistoryProduct AS HistoryProduct{Environment.NewLine}" +
-                            $"        INNER JOIN Analytics.{pathToRoot.First().Name} as {pathToRoot.First().Name} ON HistoryProduct.TableName='{pathToRoot.First().Name}' AND HistoryProduct.PrimaryKeyValue={pathToRoot.First().Name}.{pathToRoot.First().IdentityColumnName()}";
-
-                for (var j = 1; j < pathToRoot.Count; j++)
-                {
-                    var previousTable = pathToRoot[j - 1];
-
-                    var previousTableConstraintColumns = previousTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
-
-                    var currentTable = pathToRoot[j];
-
-                    var currentTableConstraintColumns = currentTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
-
-                    var joiningColumns = previousTableConstraintColumns.Where(ptc =>
-                        currentTableConstraintColumns.Any(ctc => ctc.Name.Equals(ptc.Name)));
-
-                    var joinStatement = $"        INNER JOIN Analytics.{currentTable.Name} AS {currentTable.Name} ON";
-
-                    foreach (var joiningColumn in joiningColumns)
+                    ScriptFileName = "HistoryProductDeltaScript_Test.sql",
+                    ScriptName = "HistoryProductDeltaScript_TestName",
+                    Schema = database.Schemas.First(),
+                    Table = null,
+                    TableTypeName = "TT_HistoryProductIgnore",
+                    TableTypeColumns = new List<ColumnModel>
                     {
-                        joinStatement +=
-                            $" {previousTable.Name}.{joiningColumn.Name}={currentTable.Name}.{joiningColumn.Name}";
-                    }
+                        new ColumnModel()
+                        {
+                            Name = "Ignore",
+                            DataType = "NVARCHAR",
+                            MaxLength = 50
+                        }
+                    },
+                    TableTypeVariableName = "HistoryProductIgnore",
+                    DomainIdentifierName = "AtomProductId",
+                    TablePaths = pathsToRoot,
+                    DeltaSourceTableName = "HistoryProduct"
+                };
 
-                    joins += $"{Environment.NewLine}{joinStatement}";
-                }
+                deltaScriptVariableSets.Add(deltaScriptVariableSet);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unable to generate script variable sets");
 
-                var where = $"{Environment.NewLine}    WHERE" +
-                            $"{Environment.NewLine}        HistoryProduct.Timestamp >= @DeltaTime";
-
-                script += select + joins + where + $"{Environment.NewLine}END{Environment.NewLine}{Environment.NewLine}";
+                return null;
             }
 
-            script += $"SELECT DISTINCT AtomProductId FROM @Identifier";
+            var deltaScripts = new List<SqlScript>();
+
+            try
+            {
+                foreach (var deltaScriptVariableSet in deltaScriptVariableSets)
+                {
+                    var script = await _scriptFactory.ScriptFrom(deltaScriptVariableSet);
+
+                    var sqlScript = new SqlScript(deltaScriptVariableSet.ScriptFileName, script);
+
+                    deltaScripts.Add(sqlScript);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "unable to generate scripts");
+
+                return null;
+            }
+
+            return deltaScripts;
+
+
+
+
+            //
+            // var script = $"DECLARE @Ignore TABLE (TableName NVARCHAR(50)){Environment.NewLine}{Environment.NewLine}" +
+            //              $"DECLARE @Identifier TABLE (AtomProductId INT INDEX IX_AtomProductId CLUSTERED){Environment.NewLine}{Environment.NewLine}" +
+            //              $"DECLARE @DeltaTime DATETIME = DATEADD(HOUR, -4, GETDATE()){Environment.NewLine}{Environment.NewLine}";
+            //
+            // foreach (var path in pathsToRoot)
+            // {
+            //     var pathToRoot = path.ToList();
+            //
+            //     var selectColumn = pathToRoot.Last().Properties.First(p => p.Key.Equals("MergeIdentifier", StringComparison.InvariantCultureIgnoreCase)).Value;
+            //
+            //     var select = $"IF NOT EXISTS (SELECT 1 FROM @Ignore WHERE TableName='{pathToRoot.First().Name}'){Environment.NewLine}BEGIN{Environment.NewLine}" +
+            //                  $"    INSERT INTO{Environment.NewLine}        @Identifier{Environment.NewLine}    SELECT{Environment.NewLine}        {path.Last().Name}.{selectColumn}{Environment.NewLine}    FROM{Environment.NewLine}";
+            //
+            //     var joins = $"        Analytics.HistoryProduct AS HistoryProduct{Environment.NewLine}" +
+            //                 $"        INNER JOIN Analytics.{pathToRoot.First().Name} as {pathToRoot.First().Name} ON HistoryProduct.TableName='{pathToRoot.First().Name}' AND HistoryProduct.PrimaryKeyValue={pathToRoot.First().Name}.{pathToRoot.First().IdentityColumnName()}";
+            //
+            //     for (var j = 1; j < pathToRoot.Count; j++)
+            //     {
+            //         var previousTable = pathToRoot[j - 1];
+            //
+            //         var previousTableConstraintColumns = previousTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
+            //
+            //         var currentTable = pathToRoot[j];
+            //
+            //         var currentTableConstraintColumns = currentTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
+            //
+            //         var joiningColumns = previousTableConstraintColumns.Where(ptc =>
+            //             currentTableConstraintColumns.Any(ctc => ctc.Name.Equals(ptc.Name)));
+            //
+            //         var joinStatement = $"        INNER JOIN Analytics.{currentTable.Name} AS {currentTable.Name} ON";
+            //
+            //         foreach (var joiningColumn in joiningColumns)
+            //         {
+            //             joinStatement +=
+            //                 $" {previousTable.Name}.{joiningColumn.Name}={currentTable.Name}.{joiningColumn.Name}";
+            //         }
+            //
+            //         joins += $"{Environment.NewLine}{joinStatement}";
+            //     }
+            //
+            //     var where = $"{Environment.NewLine}    WHERE" +
+            //                 $"{Environment.NewLine}        HistoryProduct.Timestamp >= @DeltaTime";
+            //
+            //     script += select + joins + where + $"{Environment.NewLine}END{Environment.NewLine}{Environment.NewLine}";
+            // }
+            //
+            // script += $"SELECT DISTINCT AtomProductId FROM @Identifier";
 
             // Return scripts
-            var sqlScripts = new List<SqlScript>();
-
-            return sqlScripts;
         }
     }
 }

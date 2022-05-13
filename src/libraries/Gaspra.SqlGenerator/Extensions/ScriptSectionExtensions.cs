@@ -6,8 +6,8 @@ namespace Gaspra.SqlGenerator.Extensions
 {
     public static class ScriptSectionExtensions
     {
-        public static IReadOnlyCollection<IScriptSection> OrderSections(
-            this IReadOnlyCollection<IScriptSection> scriptSections)
+        public static IReadOnlyCollection<IScriptSection<T>> OrderSections<T>(
+            this IReadOnlyCollection<IScriptSection<T>> scriptSections) where T : IScriptVariableSet
         {
             var deepestOrder = scriptSections
                 .Select(s => s.Order.Values.Length)
