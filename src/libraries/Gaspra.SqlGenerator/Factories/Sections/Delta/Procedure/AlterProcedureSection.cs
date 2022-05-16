@@ -83,8 +83,10 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
 
                     foreach (var innerJoinColumn in innerJoinColumns)
                     {
+                        var trailingAnd = innerJoinColumn.Equals(innerJoinColumns.Last()) ? "" : " AND";
+
                         innerJoinStatement +=
-                            $" {previousTable.Name}.{innerJoinColumn.Name}={currentTable.Name}.{innerJoinColumn.Name}";
+                            $" {previousTable.Name}.{innerJoinColumn.Name}={currentTable.Name}.{innerJoinColumn.Name}{trailingAnd}";
                     }
 
                     joinStatement.Add(innerJoinStatement);
