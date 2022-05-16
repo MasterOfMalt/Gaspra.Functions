@@ -28,14 +28,13 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
         {
             var script = new List<string>
             {
-                $"DECLARE @{variableSet.DomainIdentifierName} TABLE ({variableSet.DomainIdentifierName}Id INT INDEX IX_{variableSet.DomainIdentifierName}Id CLUSTERED)",
+                $"DECLARE @{variableSet.DomainIdentifierName} TABLE ({variableSet.DomainIdentifierName} INT INDEX IX_{variableSet.DomainIdentifierName} CLUSTERED)",
                 $""
             };
 
             var targetTable = variableSet.TablePaths.First().Last();
 
-            var selectColumn = targetTable.Properties.First(p =>
-                p.Key.Equals("MergeIdentifier", StringComparison.InvariantCultureIgnoreCase)).Value;
+            var selectColumns = targetTable.MergeIdentifierColumns(variableSet.Schema);
 
             foreach (var tablePath in variableSet.TablePaths)
             {
@@ -47,10 +46,14 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
                     $"BEGIN",
                     $"    INSERT INTO",
                     $"        @{variableSet.DomainIdentifierName}",
-                    $"    SELECT",
-                    $"        {targetTable.Name}.{selectColumn}",
-                    $"    FROM"
+                    $"    SELECT"
                 };
+
+                selectStatement.AddRange(from selectColumn in selectColumns
+                    let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
+                    select $"        {targetTable.Name}.{selectColumn.Name}{lastColumn}");
+
+                selectStatement.Add($"    FROM");
 
                 var joinStatement = new List<string>
                 {
@@ -64,11 +67,13 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
 
                     var previousTable = tablePathList[j - 1];
 
-                    var previousTableConstraintColumns = previousTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
+                    var previousTableConstraintColumns =
+                        previousTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
 
                     var currentTable = tablePathList[j];
 
-                    var currentTableConstraintColumns = currentTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
+                    var currentTableConstraintColumns =
+                        currentTable.Columns.Where(c => c.Constraints != null && c.Constraints.Any());
 
                     var innerJoinColumns = previousTableConstraintColumns.Where(ptc =>
                         currentTableConstraintColumns.Any(ctc => ctc.Name.Equals(ptc.Name)));
@@ -102,9 +107,15 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
 
             script.AddRange(new List<string>
             {
-                $"",
-                $"SELECT DISTINCT",
-                $"    {selectColumn}",
+                $"SELECT DISTINCT"
+            });
+
+            script.AddRange(from selectColumn in selectColumns
+                let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
+                select $"    {selectColumn.Name}{lastColumn}");
+
+            script.AddRange(new List<string>
+            {
                 $"FROM",
                 $"    @{variableSet.DomainIdentifierName}"
             });

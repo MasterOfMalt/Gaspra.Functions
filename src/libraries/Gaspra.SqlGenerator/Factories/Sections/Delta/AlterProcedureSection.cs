@@ -25,8 +25,8 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta
             var scriptLines = await _scriptLineFactory.LinesFrom(
                 0,
                 $"ALTER PROCEDURE [{variableSet.Schema.Name}].[{variableSet.ScriptName}]",
-                $"    @{variableSet.TableTypeVariableName} [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] READONLY,",
-                $"    @Delta DATETIME",
+                $"    @Delta DATETIME,",
+                $"    @{variableSet.TableTypeVariableName} [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] READONLY",
                 "AS",
                 "BEGIN",
                 "",

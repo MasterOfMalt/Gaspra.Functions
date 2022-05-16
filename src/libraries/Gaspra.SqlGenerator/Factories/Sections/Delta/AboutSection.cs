@@ -31,11 +31,30 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta
             {
                 $" ** [{variableSet.Schema.Name}].[{variableSet.ScriptName}]",
                 $" **",
-                $" ** Expects table type parameter: @{variableSet.TableTypeVariableName} as",
-                $" **     [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] ("
+                $" ** About:",
+                $" **     Retrieve the identifiers for any data points changed (inserted, updated, deleted)",
+                $" **     over a given period of time. Use the ignore parameter table type to ignore specific",
+                $" **     tables when looking at the changed identifiers.",
+                $" **",
+                $" ** Parameters:",
+                $" **     @Delta [DATETIME],",
+                $" **     @{variableSet.TableTypeVariableName} [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] (",
+                $" **         [Ignore] NVARCHAR(50) NOT NULL",
+                $" **     )",
+                $" **",
+                $" ** Tables covered by delta:"
             };
 
-           var assemblyValue = Assembly
+            var tablesCovered = variableSet.TablePaths.SelectMany(tp => tp.Select(t => t.Name)).Distinct().OrderBy(dt => dt).ToList();
+
+            foreach (var tableCovered in tablesCovered)
+            {
+                var trailingComma = tableCovered.Equals(tablesCovered.Last()) ? "" : ",";
+
+                aboutText.Add($" **     {tableCovered}{trailingComma}");
+            }
+
+            var assemblyValue = Assembly
                 .GetEntryAssembly()?
                 .CustomAttributes
                 .FirstOrDefault(a => a.AttributeType == typeof(AssemblyInformationalVersionAttribute))?
