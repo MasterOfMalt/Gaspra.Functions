@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gaspra.Database.Extensions;
@@ -42,7 +41,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
 
                 var selectStatement = new List<string>
                 {
-                    $"IF NOT EXISTS (SELECT 1 FROM @{variableSet.TableTypeVariableName} WHERE Ignore='{rootTable.Name}')",
+                    $"IF EXISTS (SELECT 1 FROM @{variableSet.TableTypeVariableName} WHERE Include='{rootTable.Name}')",
                     $"BEGIN",
                     $"    INSERT INTO",
                     $"        @{variableSet.DomainIdentifierName}",
@@ -50,8 +49,8 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
                 };
 
                 selectStatement.AddRange(from selectColumn in selectColumns
-                    let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
-                    select $"        {targetTable.Name}.{selectColumn.Name}{lastColumn}");
+                                         let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
+                                         select $"        {targetTable.Name}.{selectColumn.Name}{lastColumn}");
 
                 selectStatement.Add($"    FROM");
 
@@ -113,8 +112,8 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta.Procedure
             });
 
             script.AddRange(from selectColumn in selectColumns
-                let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
-                select $"    {selectColumn.Name}{lastColumn}");
+                            let lastColumn = selectColumns.Last().Equals(selectColumn) ? "" : ","
+                            select $"    {selectColumn.Name}{lastColumn}");
 
             script.AddRange(new List<string>
             {

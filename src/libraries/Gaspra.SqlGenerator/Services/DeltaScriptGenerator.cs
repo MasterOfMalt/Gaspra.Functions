@@ -79,7 +79,7 @@ namespace Gaspra.SqlGenerator.Services
                         HistoryTable = table.Properties.First(p => p.Key.Equals("gf.Record")).Value,
                         RootPath = table.PathToRoot()
                     })
-                    .GroupBy(t => "Delta" + t.RootPath?.Last()?.Name + "From" + t.HistoryTable )
+                    .GroupBy(t => "Delta" + t.RootPath?.Last()?.Name + "From" + t.HistoryTable)
                     .ToList();
 
                 foreach (var tableGroup in tableHistoryInformationList)
@@ -94,17 +94,17 @@ namespace Gaspra.SqlGenerator.Services
                         ScriptName = $"{tableGroup.Key}",
                         Schema = schema,
                         Table = null,
-                        TableTypeName = $"TT_{tableGroup.Key}Ignore",
+                        TableTypeName = $"TT_{tableGroup.Key}Include",
                         TableTypeColumns = new List<ColumnModel>
                         {
                             new ColumnModel()
                             {
-                                Name = "Ignore",
+                                Name = "Include",
                                 DataType = "NVARCHAR",
                                 MaxLength = 50
                             }
                         },
-                        TableTypeVariableName = $"{tableGroup.Key}Ignore",
+                        TableTypeVariableName = $"{tableGroup.Key}Include",
                         DomainIdentifierName = domainIdentifierColumn.Name,
                         TablePaths = pathsToRoot,
                         DeltaSourceTableName = tableGroup.First().HistoryTable
