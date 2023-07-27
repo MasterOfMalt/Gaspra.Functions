@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Gaspra.Database.Extensions;
 using Gaspra.SqlGenerator.Interfaces;
 using Gaspra.SqlGenerator.Models;
 
@@ -33,13 +31,13 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta
                 $" **",
                 $" ** About:",
                 $" **     Retrieve the identifiers for any data points changed (inserted, updated, deleted)",
-                $" **     over a given period of time. Use the ignore parameter table type to ignore specific",
+                $" **     over a given period of time. Use the include parameter table type to include specific",
                 $" **     tables when looking at the changed identifiers.",
                 $" **",
                 $" ** Parameters:",
                 $" **     @Delta [DATETIME],",
                 $" **     @{variableSet.TableTypeVariableName} [{variableSet.Schema.Name}].[{variableSet.TableTypeName}] (",
-                $" **         [Ignore] NVARCHAR(50) NOT NULL",
+                $" **         [Include] NVARCHAR(50) NOT NULL",
                 $" **     )",
                 $" **",
                 $" ** Tables covered by delta:"
@@ -92,7 +90,7 @@ namespace Gaspra.SqlGenerator.Factories.Sections.Delta
                     }
                     else
                     {
-                        return " " + new string('*', longestLine + 2 );
+                        return " " + new string('*', longestLine + 2);
                     }
                 }));
 
