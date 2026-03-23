@@ -8,12 +8,12 @@ jobs:
     name: build, pack & publish
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
       # Publish
       - name: Publish on version change
         id: publish_nuget
-        uses: gaspra/gaspra.publishdotnetnuget@v1
+        uses: gaspra/gaspra.publishdotnetnuget@e28b82b7e4444bf8d1ffed9cb85f986a5f1427fa # v1
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: src/Gaspra.Functions/Gaspra.Functions.csproj
